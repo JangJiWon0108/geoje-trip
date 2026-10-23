@@ -808,7 +808,7 @@ function slotCard(s) {
     <span class="slot-st${picked ? " ok" : ""}">${s.fixed ? "고정" : picked ? "✓ 정했어요" : `후보 ${opts.length}곳`}</span></div>`;
   let body;
   if (s.fixed) {
-    body = "";
+    body = s.photo_url ? thumb(s, "big", slotIcon(s)) : "";
   } else if (picked) {
     body = `<div class="pick-card">${thumb(picked, "big", slotIcon(s))}
       <div class="pick-title">${esc(picked.title)}${badge(picked.badge)}</div>

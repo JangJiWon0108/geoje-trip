@@ -122,6 +122,8 @@ create table if not exists public.trip_slots (
   chosen_id   bigint,
   created_at  timestamptz not null default now()
 );
+-- 고정 슬롯(바베큐 등) 대표 사진
+alter table public.trip_slots add column if not exists photo_url text;
 
 create table if not exists public.trip_options (
   id          bigint generated always as identity primary key,
