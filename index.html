@@ -738,6 +738,7 @@ const SLOT = {
   cafe: { ic: "☕", c: "#b07848" },
   bbq:  { ic: "🔥", c: "#ff7a1a" },
   spot: { ic: "📸", c: "#0ea5a4" },
+  shop: { ic: "🛒", c: "#7c5cff" },
 };
 const slotIcon = s => s.title.includes("아침") ? "🍳" : (SLOT[s.kind] || SLOT.meal).ic;
 const optionsOf = id => options.filter(o => o.slot_id === id);
@@ -754,6 +755,7 @@ function badge(b) {
 // 출처 링크 이름 — 어디서 찾은 곳인지 한눈에
 function srcName(url) {
   if (/map\.kakao|kko\.to/.test(url)) return "카카오맵";
+  if (/place\.naver|naver\.me|map\.naver/.test(url)) return "네이버";
   if (/youtube|youtu\.be/.test(url)) return "유튜브";
   if (/blog|brunch|keyzard|tistory|click1-tip/.test(url)) return "블로그";
   if (/siksinhot/.test(url)) return "식신";

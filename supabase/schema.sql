@@ -112,7 +112,7 @@ create table if not exists public.trip_slots (
   id          bigint generated always as identity primary key,
   day         date not null,
   time        time,
-  kind        text not null check (kind in ('meal', 'cafe', 'bbq', 'spot')),
+  kind        text not null check (kind in ('meal', 'cafe', 'bbq', 'spot', 'shop')),
   title       text not null,                 -- 점심 · 카페 · 저녁 바베큐 …
   fixed       boolean not null default false, -- 고정 슬롯(후보 없이 정해짐)
   memo        text,
@@ -156,7 +156,7 @@ grant select, insert, update, delete on public.trip_slots, public.trip_options t
 create table if not exists public.trip_places (
   id          bigint generated always as identity primary key,
   name        text not null unique,
-  category    text not null check (category in ('맛집', '카페', '구경')),
+  category    text not null check (category in ('맛집', '카페', '구경', '숙소', '마트')),
   area        text,
   menu        text,
   memo        text,
@@ -182,7 +182,7 @@ begin
   select kind into k from trip_slots where id = new.slot_id;
   insert into trip_places (name, category, area, menu, memo, badge, source, source_url, map_url, photo_url)
   values (new.title,
-          case k when 'cafe' then '카페' when 'spot' then '구경' else '맛집' end,
+          case k when 'cafe' then '카페' when 'spot' then '구경' when 'shop' then '마트' else '맛집' end,
           new.area, new.menu, new.memo, new.badge, '앱에서 추가', new.url,
           'https://map.naver.com/p/search/' || replace('거제 ' || new.title, ' ', '%20'), new.photo_url)
   on conflict (name) do nothing;
