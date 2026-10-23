@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>거제 여행</title>
 <meta name="theme-color" content="#0e7c86">
+<meta name="color-scheme" content="light only">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -18,12 +19,12 @@
    색 · 크기 토큰 (라이트 / 다크)
    ───────────────────────────────────────────────────────────── */
 :root {
-  --bg: #f2f5f7;
+  --bg: #f7f9fb;
   --surface: #ffffff;
-  --surface-2: #f6f8fa;
-  --text: #121a1f;
-  --muted: #6b7a83;
-  --line: rgba(15, 35, 45, .08);
+  --surface-2: #f1f4f7;
+  --text: #0f171c;
+  --muted: #56656e;
+  --line: rgba(15, 35, 45, .10);
   --brand: #0e7c86;
   --brand-2: #2bb3a3;
   --brand-soft: rgba(14, 124, 134, .10);
@@ -35,21 +36,8 @@
   --safe-b: env(safe-area-inset-bottom, 0px);
   --safe-t: env(safe-area-inset-top, 0px);
 }
-@media (prefers-color-scheme: dark) {
-  :root {
-    --bg: #0b1114;
-    --surface: #141c20;
-    --surface-2: #1a2429;
-    --text: #e9f0f2;
-    --muted: #8d9ca3;
-    --line: rgba(255, 255, 255, .07);
-    --brand: #3cc7c0;
-    --brand-2: #5fd6a8;
-    --brand-soft: rgba(60, 199, 192, .14);
-    --shadow: 0 1px 2px rgba(0, 0, 0, .3), 0 8px 24px rgba(0, 0, 0, .25);
-    --glass: rgba(20, 28, 32, .78);
-  }
-}
+/* 폰이 다크 모드여도 늘 흰 테마로 보인다(사용자 요청, 2026-10-23) */
+:root { color-scheme: light; }
 
 * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 html, body { margin: 0; }
@@ -102,7 +90,7 @@ main { max-width: 640px; margin: -26px auto 0; padding: 0 16px calc(120px + var(
 .empty { text-align: center; padding: 48px 20px; color: var(--muted); }
 .empty .em { font-size: 44px; display: block; margin-bottom: 8px; }
 .empty b { display: block; color: var(--text); font-size: 17px; margin-bottom: 4px; }
-.card { background: var(--surface); border-radius: var(--radius); box-shadow: var(--shadow); }
+.card { background: var(--surface); border-radius: var(--radius); box-shadow: var(--shadow); border: 1px solid var(--line); }
 .fade-in { animation: fade .28s ease both; }
 @keyframes fade { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
 .press { transition: transform .12s ease; }
