@@ -158,7 +158,7 @@ create unique index if not exists trip_options_slot_title on public.trip_options
 create table if not exists public.trip_places (
   id          bigint generated always as identity primary key,
   name        text not null unique,
-  category    text not null check (category in ('맛집', '카페', '놀거리', '숙소', '마트')),
+  category    text not null check (category in ('맛집', '해장', '카페', '놀거리', '숙소', '마트')),
   area        text,
   menu        text,
   memo        text,

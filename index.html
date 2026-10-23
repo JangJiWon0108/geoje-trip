@@ -616,10 +616,10 @@ const store = {
     const { error } = await client.from("trip_options").delete().eq("id", id);
     if (error) throw error;
   },
-  async places(category) {
+  async places(categories) {
     if (!remote) return [];
     const { data, error } = await client.from("trip_places")
-      .select("id,name,category,area,menu,memo,badge,source_url,photo_url,lat,lng").eq("category", category).order("name");
+      .select("id,name,category,area,menu,memo,badge,source_url,photo_url,lat,lng").in("category", categories).order("name");
     if (error) throw error;
     return data;
   },
@@ -918,22 +918,24 @@ function openSlot(s) {
 }
 
 // 후보 추가 — 그 카테고리의 장소 DB 전체에서 고른다(이미 후보인 곳은 빼고 보여 준다)
-const SLOT_CAT = { meal: "맛집", cafe: "카페", spot: "놀거리", shop: "마트" };
+const SLOT_CAT = { meal: ["맛집", "해장"], cafe: ["카페"], spot: ["놀거리"], shop: ["마트"] };
 const shortDay = d => { const t = new Date(d + "T00:00:00"); return `${t.getMonth() + 1}/${t.getDate()}`; };
 const isDup = e => e && (e.code === "23505" || /duplicate|unique/i.test(e.message || ""));
 
 async function openPicker(s) {
-  const cat = SLOT_CAT[s.kind] || "맛집", ic = slotIcon(s);
+  const cats = SLOT_CAT[s.kind] || ["맛집"], cat = cats.join(" · "), ic = slotIcon(s);
+  const morning = /아침|아점/.test(s.title);   // 아침 · 아점은 해장 먼저
   let all;
-  try { all = await store.places(cat); } catch (e) { return fail(e); }
+  try { all = await store.places(cats); } catch (e) { return fail(e); }
   const have = new Set(optionsOf(s.id).map(o => o.title));
-  const rank = p => (p.badge === "주신 곳" ? 0 : p.badge === "블루리본" ? 1 : 2);
+  const rank = p => (p.badge === "주신 곳" ? 0 : 3) + (morning && p.category === "해장" ? 0 : morning ? 6 : 0)
+                 + (p.badge === "블루리본" ? 0 : 1) + (!morning && p.category === "해장" ? 2 : 0);
   const list = all.filter(p => !have.has(p.name)).sort((a, b) => rank(a) - rank(b) || a.name.localeCompare(b.name, "ko"));
   const rows = q => list.filter(p => !q || [p.name, p.area, p.menu, p.memo].join(" ").includes(q)).map(p => {
     const o = { title: p.name, area: p.area, url: p.source_url, photo_url: p.photo_url };
     return `<div class="opt" data-place="${p.id}">
       <div class="opt-thumb">${thumb(o, "sq", ic)}</div>
-      <div class="opt-main"><div class="opt-t">${esc(p.name)}${badge(p.badge)}</div>
+      <div class="opt-main"><div class="opt-t">${esc(p.name)}${badge(p.badge)}${p.category === "해장" ? `<span class="bdg season">🍲 해장</span>` : ""}</div>
         ${p.area || p.menu ? `<div class="opt-s">${esc([p.area, p.menu].filter(Boolean).join(" · "))}</div>` : ""}
         ${p.memo ? `<div class="opt-m">${esc(p.memo)}</div>` : ""}
         <div class="opt-act">${mapLinks(o)}<span class="swap">+ 넣기</span></div></div></div>`;
