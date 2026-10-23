@@ -201,7 +201,7 @@ img.who { display: block; object-fit: cover; background: var(--surface-2); }
    하단 탭바 · 추가 버튼
    ───────────────────────────────────────────────────────────── */
 .tabbar { position: fixed; left: 12px; right: 12px; bottom: calc(10px + var(--safe-b)); z-index: 20;
-          max-width: 420px; margin: 0 auto; display: grid; grid-template-columns: repeat(3, 1fr);
+          max-width: 300px; margin: 0 auto; display: grid; grid-template-columns: repeat(2, 1fr);
           background: var(--glass); backdrop-filter: saturate(180%) blur(18px); -webkit-backdrop-filter: saturate(180%) blur(18px);
           border-radius: 24px; box-shadow: 0 10px 30px rgba(10, 30, 40, .16); border: 1px solid var(--line); padding: 6px; }
 .tab { border: 0; background: transparent; padding: 7px 0 6px; border-radius: 18px; display: grid; justify-items: center; gap: 2px;
@@ -391,9 +391,6 @@ img.who { display: block; object-fit: cover; background: var(--surface-2); }
   <button class="tab" data-tab="schedule">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4.5" width="18" height="16" rx="4"/><path d="M3 9.5h18M8 3v3M16 3v3"/></svg>일정
   </button>
-  <button class="tab" data-tab="place">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-7-6.2-7-11.5A7 7 0 0 1 19 9.5C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/></svg>장소
-  </button>
   <button class="tab" data-tab="check">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 7h14l-1.2 11.2a2 2 0 0 1-2 1.8H8.2a2 2 0 0 1-2-1.8z"/><path d="M9 7a3 3 0 0 1 6 0M9.5 13l2 2 3.5-3.5"/></svg>준비물
   </button>
@@ -557,7 +554,8 @@ const store = {
 // ─────────────────────────────────────────────────────────────
 let items = [];
 let loaded = false;
-const TABS = ["schedule", "place", "check"];
+// 장소 탭은 잠시 숨김(사용자, 2026-10-23) — 데이터 · renderPlace 는 남겨 두어 다시 켜려면 여기와 탭바 버튼만 되살린다
+const TABS = ["schedule", "check"];
 let tab = TABS.includes(lsGet(TAB_KEY)) ? lsGet(TAB_KEY) : "schedule";
 let placeFilter = "전체";
 
@@ -633,7 +631,7 @@ function renderHero() {
     const f = d => `${d.getMonth() + 1}.${d.getDate()}`;
     parts.push(days.length > 1 ? `${f(first)} – ${f(last)}` : f(first));
   }
-  parts.push(`장소 ${byKind("place").length} · 준비물 ${byKind("check").length}`);
+  parts.push(`일정 ${byKind("schedule").length} · 준비물 ${byKind("check").length}`);
   $("#heroSub").innerHTML = parts.join("<span style='opacity:.5'>·</span>");
   $("#crew").innerHTML = people.length
     ? `<div class="crew-faces">${people.map(p => who(p.name)).join("")}</div>
