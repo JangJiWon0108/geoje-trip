@@ -68,10 +68,6 @@ a { color: inherit; text-decoration: none; }
 }
 .hero-top { display: flex; justify-content: space-between; align-items: center; }
 .hero-kicker { font-size: 13px; font-weight: 600; opacity: .85; letter-spacing: .02em; }
-.sync { font-size: 12px; display: inline-flex; align-items: center; gap: 6px;
-        background: rgba(255, 255, 255, .18); padding: 4px 10px; border-radius: 99px; backdrop-filter: blur(6px); }
-.sync i { width: 7px; height: 7px; border-radius: 50%; background: #9ff5c9; box-shadow: 0 0 0 3px rgba(159, 245, 201, .25); }
-.sync.demo i { background: #ffd166; box-shadow: 0 0 0 3px rgba(255, 209, 102, .25); }
 .hero h1 { margin: 10px 0 4px; font-size: 34px; font-weight: 800; letter-spacing: -0.03em; }
 .hero-sub { font-size: 14px; opacity: .9; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
 .dday { background: #fff; color: var(--brand); font-weight: 800; font-size: 13px; padding: 3px 10px; border-radius: 99px; }
@@ -392,7 +388,6 @@ img.who { display: block; object-fit: cover; background: var(--surface-2); }
 /* ─────────────────────────────────────────────────────────────
    응원하기 · 버그 신고
    ───────────────────────────────────────────────────────────── */
-.sync { border: 0; color: #fff; cursor: default; }
 .hero-actions { display: flex; gap: 8px; margin-top: 14px; position: relative; z-index: 1; flex-wrap: wrap; }
 .hero-btn { display: inline-flex; align-items: center; gap: 6px; padding: 8px 13px; border-radius: 99px; cursor: pointer;
             border: 1px solid rgba(255, 255, 255, .3); background: rgba(255, 255, 255, .16); color: #fff;
@@ -435,7 +430,6 @@ img.who { display: block; object-fit: cover; background: var(--surface-2); }
 <header class="hero">
   <div class="hero-top">
     <span class="hero-kicker">GEOJE TRIP</span>
-    <button type="button" class="sync" id="sync"><i></i><span>연결 중</span></button>
   </div>
   <h1>거제 여행</h1>
   <div class="hero-sub" id="heroSub">함께 만드는 여행 계획</div>
@@ -1145,9 +1139,6 @@ async function drawRoute() {
 function render() {
   document.querySelectorAll(".tab").forEach(b => b.classList.toggle("on", b.dataset.tab === tab));
   $("#fab").style.display = tab === "route" ? "none" : "";
-  const sync = $("#sync");
-  sync.classList.toggle("demo", !remote);
-  sync.querySelector("span").textContent = remote ? "함께 보는 중" : "데모";
   if (!loaded) { $("#view").innerHTML = `<div class="skeleton"></div><div class="skeleton"></div><div class="skeleton"></div>`; return; }
   renderHero();
   const view = { schedule: renderSchedule, route: renderRoute, place: renderPlace, check: renderCheck }[tab];
