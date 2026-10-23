@@ -148,6 +148,8 @@ create policy trip_slots_admin   on public.trip_slots   for select to anon using
 create policy trip_options_pass  on public.trip_options for all to anon using (public.trip_key_ok()) with check (public.trip_key_ok());
 create policy trip_options_admin on public.trip_options for select to anon using (public.admin_ok());
 grant select, insert, update, delete on public.trip_slots, public.trip_options to anon;
+-- 같은 슬롯에 같은 곳은 한 번만
+create unique index if not exists trip_options_slot_title on public.trip_options (slot_id, title);
 
 -- ─────────────────────────────────────────────────────────────
 -- 장소 DB — 주신 곳 · 웹 검색 · 앱에서 추가한 후보를 모두 모은다(관리자 화면 «장소»)
@@ -156,7 +158,7 @@ grant select, insert, update, delete on public.trip_slots, public.trip_options t
 create table if not exists public.trip_places (
   id          bigint generated always as identity primary key,
   name        text not null unique,
-  category    text not null check (category in ('맛집', '카페', '구경', '숙소', '마트')),
+  category    text not null check (category in ('맛집', '카페', '놀거리', '숙소', '마트')),
   area        text,
   menu        text,
   memo        text,
@@ -172,6 +174,8 @@ alter table public.trip_places add column if not exists photo_url text;
 alter table public.trip_places enable row level security;
 drop policy if exists trip_places_admin on public.trip_places;
 create policy trip_places_admin on public.trip_places for all to anon using (public.admin_ok()) with check (public.admin_ok());
+drop policy if exists trip_places_pass on public.trip_places;
+create policy trip_places_pass on public.trip_places for select to anon using (public.trip_key_ok());   -- 후보 고르기용 읽기
 grant select, insert, update, delete on public.trip_places to anon;
 
 -- 앱에서 슬롯 후보를 추가하면 장소 DB 에도 넣는다(이미 있으면 그대로)
@@ -182,7 +186,7 @@ begin
   select kind into k from trip_slots where id = new.slot_id;
   insert into trip_places (name, category, area, menu, memo, badge, source, source_url, map_url, photo_url)
   values (new.title,
-          case k when 'cafe' then '카페' when 'spot' then '구경' when 'shop' then '마트' else '맛집' end,
+          case k when 'cafe' then '카페' when 'spot' then '놀거리' when 'shop' then '마트' else '맛집' end,
           new.area, new.menu, new.memo, new.badge, '앱에서 추가', new.url,
           'https://map.naver.com/p/search/' || replace('거제 ' || new.title, ' ', '%20'), new.photo_url)
   on conflict (name) do nothing;
@@ -192,6 +196,21 @@ end $$;
 drop trigger if exists trip_options_to_places on public.trip_options;
 create trigger trip_options_to_places after insert on public.trip_options
   for each row execute function public.trip_places_from_option();
+
+-- ─────────────────────────────────────────────────────────────
+-- 동선 도로 경로 캐시 — 처음 본 사람이 길찾기(OSRM) 결과를 넣고, 다음 사람부터는 바로 쓴다
+-- ─────────────────────────────────────────────────────────────
+create table if not exists public.trip_routes (
+  key         text primary key,          -- 경유지 좌표 문자열
+  data        jsonb not null,            -- { line: [[lng,lat]…], legs: [{km,min}…] }
+  created_at  timestamptz not null default now()
+);
+alter table public.trip_routes enable row level security;
+drop policy if exists trip_routes_read  on public.trip_routes;
+drop policy if exists trip_routes_write on public.trip_routes;
+create policy trip_routes_read  on public.trip_routes for select to anon using (public.trip_key_ok());
+create policy trip_routes_write on public.trip_routes for insert to anon with check (public.trip_key_ok());
+grant select, insert on public.trip_routes to anon;
 
 -- ─────────────────────────────────────────────────────────────
 -- 기록용 표 — 누가 · 어느 기기 · 어느 IP 는 요청 헤더에서 기본값으로 채운다

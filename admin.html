@@ -288,7 +288,7 @@ const avatar = name => photos[name]
   ? `<img class="who" src="${photos[name]}" alt="${esc(name)}" style="object-fit:cover">`
   : `<span class="who" style="background:${color(name)}">${esc(String(name).slice(0, 1))}</span>`;
 const KIND = { schedule: "일정", place: "장소", check: "준비물", expense: "경비", member: "인원", setting: "설정",
-               meal: "끼니", cafe: "카페", bbq: "바베큐", spot: "구경", shop: "장보기", option: "후보" };
+               meal: "끼니", cafe: "카페", bbq: "바베큐", spot: "놀거리", shop: "장보기", option: "후보" };
 const FIELD = { title: "제목", day: "날짜", time: "시간", memo: "메모", url: "링크", category: "분류", person: "담당", done: "챙김", amount: "금액",
                 chosen_id: "고른 곳", area: "지역", menu: "메뉴" };
 
@@ -445,7 +445,7 @@ function renderBugs() {
 // 장소 DB — 주신 곳 · 웹 검색 · 앱에서 추가한 곳. 지도 링크는 늘, 출처 링크는 있으면
 // ─────────────────────────────────────────────────────────────
 let placeCat = "전체", placeSrc = "전체", placeQ = "";
-const CAT_IC = { 맛집: "🍽️", 카페: "☕", 구경: "📸", 숙소: "🏠", 마트: "🛒" };
+const CAT_IC = { 맛집: "🍽️", 카페: "☕", 놀거리: "📸", 숙소: "🏠", 마트: "🛒" };
 
 function srcLabel(url) {
   if (!url) return "";
@@ -483,7 +483,7 @@ function usesOf(name) {
 function renderPlaces() {
   const all = data.places || [];
   const q = placeQ.toLowerCase();
-  const CAT_ORDER = ["숙소", "맛집", "카페", "구경", "마트"], SRC_ORDER = ["주신 곳", "앱에서 추가", "관리자 추가", "웹 검색"];
+  const CAT_ORDER = ["숙소", "맛집", "카페", "놀거리", "마트"], SRC_ORDER = ["주신 곳", "앱에서 추가", "관리자 추가", "웹 검색"];
   const rank = p => [CAT_ORDER.indexOf(p.category), SRC_ORDER.indexOf(p.source), p.badge === "블루리본" ? 0 : 1];
   const rows = all.filter(p => (placeCat === "전체" || p.category === placeCat)
     && (placeSrc === "전체" || p.source === placeSrc)
@@ -495,7 +495,7 @@ function renderPlaces() {
   const count = (k, v) => all.filter(p => p[k] === v).length;
   const chip = (group, v, n) => `<button class="chip${(group === "cat" ? placeCat : placeSrc) === v ? " on" : ""}" data-p${group}="${v}">${v === "전체" ? "전체" : (CAT_IC[v] || "") + " " + v} ${n}</button>`;
 
-  let html = `<div class="filters">${["전체", "숙소", "맛집", "카페", "구경", "마트"].filter(c => c === "전체" || count("category", c)).map(c => chip("cat", c, c === "전체" ? all.length : count("category", c))).join("")}</div>
+  let html = `<div class="filters">${["전체", "숙소", "맛집", "카페", "놀거리", "마트"].filter(c => c === "전체" || count("category", c)).map(c => chip("cat", c, c === "전체" ? all.length : count("category", c))).join("")}</div>
     <div class="filters">${["전체", "주신 곳", "웹 검색", "앱에서 추가", "관리자 추가"].filter(s => s === "전체" || count("source", s))
       .map(s => chip("src", s, s === "전체" ? all.length : count("source", s))).join("")}</div>
     <div class="ptools"><input id="pq" placeholder="이름 · 지역 · 메뉴 검색" value="${esc(placeQ)}"><button class="abtn ok" id="padd">+ 장소 추가</button></div>
@@ -521,7 +521,7 @@ function renderPlaces() {
 
 function placeForm() {
   return `<form class="card padd" id="pform">
-    <div class="two"><input name="name" placeholder="이름" required><select name="category"><option>맛집</option><option>카페</option><option>구경</option><option>숙소</option><option>마트</option></select></div>
+    <div class="two"><input name="name" placeholder="이름" required><select name="category"><option>맛집</option><option>카페</option><option>놀거리</option><option>숙소</option><option>마트</option></select></div>
     <div class="two"><input name="area" placeholder="지역 (예: 장승포)"><input name="menu" placeholder="대표 메뉴"></div>
     <input name="memo" placeholder="메모 (영업시간 · 주차 · 웨이팅)">
     <input name="source_url" type="url" placeholder="출처 링크 (블로그 · 인스타 · 유튜브)" required>
