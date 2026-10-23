@@ -283,9 +283,25 @@ img.who { display: block; object-fit: cover; background: var(--surface-2); }
 .carpin .car { font-size: 38px; line-height: 1; transition: transform .2s; }
 .car-tag { margin-bottom: 4px; background: var(--text); color: #fff; font-size: 11px; font-weight: 800; padding: 3px 8px;
            border-radius: 99px; white-space: nowrap; max-width: 200px; overflow: hidden; text-overflow: ellipsis; }
-.drive { position: absolute; left: 12px; top: 12px; z-index: 2; border: 0; border-radius: 99px; padding: 9px 15px; cursor: pointer;
-         background: var(--text); color: #fff; font-size: 14px; font-weight: 800; box-shadow: 0 6px 16px rgba(0, 0, 0, .25); }
-.drive:active { transform: scale(.95); }
+/* 동선 진행 막대 — 지도 위쪽에 떠 있는 유리 카드 */
+.trip-bar { position: absolute; left: 10px; right: 10px; top: 10px; z-index: 2; padding: 10px 14px 12px; border-radius: 16px;
+            background: rgba(255, 255, 255, .9); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, .16); }
+.tb-top { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+.tb-now { flex: 1; min-width: 0; font-size: 13px; font-weight: 800; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.tb-pct { font-size: 12px; font-weight: 800; color: var(--brand); font-variant-numeric: tabular-nums; }
+.tb-track { position: relative; height: 10px; border-radius: 99px; background: var(--surface-2); }
+.tb-fill { position: absolute; left: 0; top: 0; bottom: 0; border-radius: 99px; background: linear-gradient(90deg, var(--brand), var(--brand-2)); }
+.tb-tick { position: absolute; top: 50%; width: 8px; height: 8px; margin: -4px 0 0 -4px; border-radius: 50%; background: #fff;
+           border: 2px solid var(--c); box-sizing: border-box; pointer-events: none; }
+.tb-track input { position: absolute; left: -12px; right: -12px; top: -12px; width: calc(100% + 24px); height: 34px; margin: 0;
+                  background: transparent; -webkit-appearance: none; appearance: none; cursor: pointer; touch-action: none; }
+.tb-track input::-webkit-slider-runnable-track { height: 34px; background: transparent; }
+.tb-track input::-webkit-slider-thumb { -webkit-appearance: none; width: 26px; height: 26px; margin-top: 4px; border-radius: 50%;
+  background: #fff; border: 3px solid var(--brand); box-shadow: 0 2px 8px rgba(0, 0, 0, .25); }
+.tb-track input::-moz-range-track { background: transparent; }
+.tb-track input::-moz-range-thumb { width: 22px; height: 22px; border-radius: 50%; background: #fff; border: 3px solid var(--brand);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, .25); }
 .maplibregl-popup-content { font-family: inherit; font-size: 13px; border-radius: 12px; padding: 10px 12px; }
 .route-list { padding: 6px 0; overflow: hidden; }
 .route-day { font-size: 12px; font-weight: 800; color: var(--muted); padding: 12px 16px 6px; letter-spacing: .02em; }
@@ -1304,7 +1320,7 @@ async function drawRoute() {
 }
 
 // ─────────────────────────────────────────────────────────────
-// 우리 차 🚗 — 네 명 얼굴을 태우고 동선 위를 달린다(끌어서 옮기기 · ▶ 출발)
+// 우리 차 🚗 — 진행 막대를 끌면 동선 위를 따라 움직인다(차를 직접 끌어도 됨)
 // ─────────────────────────────────────────────────────────────
 function setupCar(ml, el, stops, runs, done) {
   if (stops.length < 2) return;
@@ -1314,6 +1330,8 @@ function setupCar(ml, el, stops, runs, done) {
   for (let i = 1; i < stops.length; i++) {
     const hit = byStart.get(i);
     if (stops[i].via === "train" || !hit) {
+      // 차 경로 묶음의 중간 지점은 묶음 시작에서 이미 위치를 잡았다 — 덮어쓰지 않는다
+      if (stopAt[i] != null) continue;
       if (!runs.some(r => r.idx.includes(i) && r.idx[0] !== i)) path.push([stops[i].lng, stops[i].lat]);
     } else {
       const line = hit.r ? hit.r.line : stops.slice(hit.run.start, hit.run.end + 1).map(p => [p.lng, p.lat]);
@@ -1333,39 +1351,68 @@ function setupCar(ml, el, stops, runs, done) {
   car.innerHTML = `<div class="car-tag" id="carTag">출발!</div><div class="car">🚗</div>`;
   const marker = new ml.Marker({ element: car, anchor: "bottom", draggable: true }).setLngLat(path[0]).addTo(map);
 
-  // 3) 위치 → 경로에 붙이기 + 다음 들를 곳 표시 + 방향 따라 차 뒤집기
-  let at = 0;
-  const place = k => {
-    k = Math.max(0, Math.min(path.length - 1, Math.round(k)));
-    const prev = path[Math.max(0, k - 2)], next = path[Math.min(path.length - 1, k + 2)];
-    if (next[0] !== prev[0]) car.querySelector(".car").style.transform = next[0] > prev[0] ? "scaleX(-1)" : "none";
-    at = k;
-    marker.setLngLat(path[k]);
-    const nx = stopAt.findIndex((p, i) => i > 0 && p >= k);
-    $("#carTag").textContent = k >= path.length - 1 ? "🏁 도착! 해산~" : nx > 0 ? `→ ${nx + 1}. ${stops[nx].name}` : "출발!";
+  // 3) 경로 거리를 잰다 — 진행 막대는 들르는 곳마다 같은 간격(서울→울산 기차가 막대를 다 먹지 않게),
+  //    한 구간 안에서는 실제 거리 비율로 움직인다
+  const cos = Math.cos(stops[0].lat * Math.PI / 180);
+  const cum = [0];
+  for (let i = 1; i < path.length; i++) {
+    const dx = (path[i][0] - path[i - 1][0]) * cos, dy = path[i][1] - path[i - 1][1];
+    cum.push(cum[i - 1] + Math.hypot(dx, dy));
+  }
+  const n = stops.length - 1;
+  const at = i => cum[stopAt[Math.max(0, Math.min(n, i))]];
+  // 경로 위 거리 d → 막대 비율
+  const fracOfDist = d => {
+    let i = 0;
+    while (i < n - 1 && at(i + 1) < d) i++;
+    const span = at(i + 1) - at(i);
+    return (i + (span > 0 ? Math.max(0, Math.min(1, (d - at(i)) / span)) : 1)) / n;
   };
-  marker.on("drag", () => { const ll = marker.getLngLat(); place(nearestIdx(path, [ll.lng, ll.lat])); });
-  marker.on("dragend", () => vibrate());
+  const fracOfIdx = k => fracOfDist(cum[k]);
 
-  // 4) ▶ 출발 — 처음부터 끝까지 달리기(다시 누르면 멈춤)
-  const btn = document.createElement("button");
-  btn.type = "button";
-  btn.className = "drive";
-  btn.textContent = "▶ 출발";
-  el.appendChild(btn);
-  let raf = null;
-  btn.onclick = () => {
-    if (raf) { cancelAnimationFrame(raf); raf = null; btn.textContent = "▶ 이어서"; return; }
-    if (at >= path.length - 1) at = 0;
-    const from = at, t0 = performance.now(), dur = 14000 * (1 - from / path.length) + 1500;
-    btn.textContent = "⏸ 멈춤";
-    const step = t => {
-      const f = Math.min(1, (t - t0) / dur);
-      place(from + (path.length - 1 - from) * (f < .5 ? 2 * f * f : 1 - (-2 * f + 2) ** 2 / 2));
-      if (f < 1) raf = requestAnimationFrame(step); else { raf = null; btn.textContent = "↺ 다시"; fx.burst(innerWidth / 2, innerHeight * .4, 60); }
-    };
-    raf = requestAnimationFrame(step);
+  // 4) 진행 막대 — 지도 위쪽에 띄우고, 들르는 곳마다 눈금을 찍는다
+  const bar = document.createElement("div");
+  bar.className = "trip-bar";
+  bar.innerHTML = `<div class="tb-top"><span class="tb-now" id="tbNow">출발!</span><span class="tb-pct" id="tbPct">0%</span></div>
+    <div class="tb-track"><div class="tb-fill" id="tbFill"></div>
+      ${stops.map((_, i) => `<i class="tb-tick" style="left:${(i / n * 100).toFixed(2)}%;--c:${DAY_COLOR[stops[i].dayN] || DAY_COLOR[0]}"></i>`).join("")}
+      <input type="range" min="0" max="1000" value="0" id="tbRange" aria-label="동선 진행"></div>`;
+  el.appendChild(bar);
+  // 막대를 만지는 동안 지도가 같이 끌리지 않게
+  ["pointerdown", "touchstart", "mousedown", "wheel"].forEach(t => bar.addEventListener(t, e => e.stopPropagation(), { passive: true }));
+
+  // 5) 비율 → 경로 위 위치(꼭짓점 사이는 보간) + 다음 들를 곳 표시 + 방향 따라 차 뒤집기
+  const range = bar.querySelector("#tbRange");
+  const place = f => {
+    f = Math.max(0, Math.min(1, f));
+    const i = Math.min(n - 1, Math.floor(f * n));
+    const d = at(i) + (at(i + 1) - at(i)) * (f * n - i);
+    let k = 1;
+    while (k < cum.length - 1 && cum[k] < d) k++;
+    const seg = cum[k] - cum[k - 1] || 1, t = Math.max(0, Math.min(1, (d - cum[k - 1]) / seg));
+    const a = path[k - 1], b = path[k] || a;
+    const pt = [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t];
+    if (b[0] !== a[0]) car.querySelector(".car").style.transform = b[0] > a[0] ? "scaleX(-1)" : "none";
+    marker.setLngLat(pt);
+    const nx = stopAt.findIndex((p, i) => i > 0 && cum[p] >= d - 1e-9);
+    const label = f >= 1 ? "🏁 도착! 해산~" : nx > 0 ? `→ ${nx + 1}. ${stops[nx].name}` : "출발!";
+    $("#carTag").textContent = label;
+    $("#tbNow").textContent = nx > 0 && f < 1 && stops[nx].time ? `${label} · ${stops[nx].time}` : label;
+    $("#tbPct").textContent = `${Math.round(f * 100)}%`;
+    $("#tbFill").style.width = `${f * 100}%`;
+    range.value = Math.round(f * 1000);
+    return pt;
   };
+  range.addEventListener("input", () => place(range.value / 1000));
+  range.addEventListener("change", () => {
+    vibrate();
+    const pt = marker.getLngLat();
+    if (!map.getBounds().contains(pt)) map.easeTo({ center: pt, duration: 500 });
+  });
+  // 차를 직접 끌어도 막대가 따라온다
+  marker.on("drag", () => { const ll = marker.getLngLat(); place(fracOfIdx(nearestIdx(path, [ll.lng, ll.lat]))); });
+  marker.on("dragend", () => { place(range.value / 1000); vibrate(); });
+  place(0);
 }
 
 // 경로 꼭짓점 중 가장 가까운 곳(위도 보정한 거리)
