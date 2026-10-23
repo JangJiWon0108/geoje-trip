@@ -22,15 +22,38 @@ exception when others then
   return null;
 end $$;
 
+-- ─────────────────────────────────────────────────────────────
+-- 암호 — 설정 표에 두고 관리자 화면에서 바꾼다.
+--   trip_pass          : 여행 암호(같이 가는 사람에게 알려 주는 값이라 원문)
+--   admin_pass_sha256  : 관리자 암호의 SHA-256 — 원문은 남기지 않는다
+-- 표는 RLS 정책이 없어 anon 이 직접 읽지 못하고, 아래 security definer 함수만 본다.
+-- 처음 한 번만 자리표시 값으로 넣고(on conflict do nothing), 이후 바꾼 값은 다시 실행해도 유지된다.
+-- ─────────────────────────────────────────────────────────────
+create table if not exists public.trip_settings (
+  key         text primary key,
+  value       text not null,
+  updated_at  timestamptz not null default now()
+);
+alter table public.trip_settings enable row level security;
+revoke all on public.trip_settings from anon, authenticated;
+
+insert into public.trip_settings (key, value) values
+  ('trip_pass', 'CHANGE_ME'),
+  ('admin_pass_sha256', encode(sha256(convert_to('CHANGE_ME_ADMIN', 'UTF8')), 'hex'))
+on conflict (key) do nothing;
+
 -- 여행 암호 · 관리자 암호 검사
 create or replace function public.trip_key_ok() returns boolean
-language sql stable as $$
-  select coalesce(public.req_header('x-trip-key'), '') = 'CHANGE_ME'
+language sql stable security definer set search_path = public as $$
+  select exists (select 1 from trip_settings
+                 where key = 'trip_pass' and value = coalesce(public.req_header('x-trip-key'), ''))
 $$;
 
 create or replace function public.admin_ok() returns boolean
-language sql stable as $$
-  select coalesce(public.req_header('x-admin-key'), '') = 'CHANGE_ME_ADMIN'
+language sql stable security definer set search_path = public as $$
+  select exists (select 1 from trip_settings
+                 where key = 'admin_pass_sha256'
+                   and value = encode(sha256(convert_to(coalesce(public.req_header('x-admin-key'), ''), 'UTF8')), 'hex'))
 $$;
 
 grant execute on function public.req_header(text), public.req_user(), public.trip_key_ok(), public.admin_ok() to anon;
@@ -198,5 +221,40 @@ begin
 end $$;
 
 grant execute on function public.cheer_count(), public.cheer() to anon;
+
+-- ─────────────────────────────────────────────────────────────
+-- 관리자 — 암호 보기 · 바꾸기 (관리자 암호가 맞을 때만)
+-- ─────────────────────────────────────────────────────────────
+create or replace function public.admin_settings() returns json
+language sql stable security definer set search_path = public as $$
+  select case when public.admin_ok() then json_build_object(
+    'trip_pass',     (select value      from trip_settings where key = 'trip_pass'),
+    'trip_updated',  (select updated_at from trip_settings where key = 'trip_pass'),
+    'admin_updated', (select updated_at from trip_settings where key = 'admin_pass_sha256')) end
+$$;
+
+create or replace function public.admin_set_pass(kind text, new_pass text) returns text
+language plpgsql security definer set search_path = public as $$
+begin
+  if not public.admin_ok() then raise exception '관리자 암호가 맞지 않아요'; end if;
+  new_pass := btrim(coalesce(new_pass, ''));
+  if length(new_pass) < 4 then raise exception '암호는 4글자 이상이어야 해요'; end if;
+
+  if kind = 'trip' then
+    update trip_settings set value = new_pass, updated_at = now() where key = 'trip_pass';
+  elsif kind = 'admin' then
+    update trip_settings set value = encode(sha256(convert_to(new_pass, 'UTF8')), 'hex'), updated_at = now()
+     where key = 'admin_pass_sha256';
+  else
+    raise exception '알 수 없는 암호 종류: %', kind;
+  end if;
+
+  -- 수정 내역에 남긴다(값은 남기지 않는다)
+  insert into trip_audit (action, kind, title, name)
+  values ('update', 'setting', case kind when 'trip' then '여행 암호 변경' else '관리자 암호 변경' end, '관리자');
+  return 'ok';
+end $$;
+
+grant execute on function public.admin_settings(), public.admin_set_pass(text, text) to anon;
 
 notify pgrst, 'reload schema';

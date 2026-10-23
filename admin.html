@@ -58,8 +58,8 @@ main { max-width: 960px; margin: -44px auto 0; padding: 0 14px calc(40px + var(-
 /* 탭 */
 .seg { display: flex; gap: 4px; background: var(--surface); padding: 5px; border-radius: 16px; box-shadow: var(--shadow);
        position: sticky; top: calc(var(--safe-t) + 8px); z-index: 5; margin-bottom: 14px; overflow-x: auto; }
-.seg button { flex: 1; min-width: 72px; border: 0; background: transparent; border-radius: 12px; padding: 10px 8px;
-              font-size: 14px; font-weight: 700; color: var(--muted); cursor: pointer; white-space: nowrap; }
+.seg button { flex: 1 1 auto; min-width: 0; border: 0; background: transparent; border-radius: 12px; padding: 10px 6px;
+              font-size: 13px; font-weight: 700; color: var(--muted); cursor: pointer; white-space: nowrap; }
 .seg button.on { background: var(--text); color: var(--bg); }
 .seg .n { font-size: 11px; opacity: .65; margin-left: 3px; }
 
@@ -116,6 +116,22 @@ main { max-width: 960px; margin: -44px auto 0; padding: 0 14px calc(40px + var(-
 .abtn.del { color: var(--coral); }
 .new-dot { display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: var(--coral); margin-left: 6px; vertical-align: 2px; }
 
+/* 설정 — 암호 */
+.set-body { padding: 4px 16px 16px; }
+.cur { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-bottom: 12px; }
+.cur code { font-family: inherit; font-size: 20px; font-weight: 800; letter-spacing: .04em;
+            background: var(--surface-2); padding: 8px 14px; border-radius: 12px; }
+.set-form { display: flex; gap: 8px; flex-wrap: wrap; }
+.set-form input { flex: 1; min-width: 140px; height: 46px; padding: 0 12px; border-radius: 12px; outline: none;
+                  border: 2px solid transparent; background: var(--surface-2); color: var(--text); font: inherit; font-size: 16px; }
+.set-form input:focus { border-color: var(--brand); background: var(--surface); }
+.set-form .abtn { height: 46px; padding: 0 18px; }
+.hint { font-size: 12px; color: var(--muted); margin: 10px 2px 0; }
+.toast { position: fixed; left: 50%; bottom: calc(24px + var(--safe-b)); z-index: 60; transform: translate(-50%, 16px);
+         background: var(--text); color: var(--bg); padding: 11px 18px; border-radius: 99px; font-size: 14px; font-weight: 700;
+         opacity: 0; pointer-events: none; transition: all .25s; white-space: nowrap; }
+.toast.show { opacity: 1; transform: translate(-50%, 0); }
+
 /* 잠금 */
 .lock { position: fixed; inset: 0; z-index: 50; display: grid; place-items: center; padding: 24px; color: #fff;
         background: radial-gradient(120% 80% at 80% 0%, #1f5e68 0%, transparent 60%), #0b1418; }
@@ -155,9 +171,11 @@ main { max-width: 960px; margin: -44px auto 0; padding: 0 14px calc(40px + var(-
     <button data-tab="audit">수정 내역</button>
     <button data-tab="cheers">응원</button>
     <button data-tab="bugs">문의</button>
+    <button data-tab="settings">설정</button>
   </nav>
   <div id="view"></div>
 </main>
+<div class="toast" id="toast"></div>
 
 <div class="lock" id="lock" hidden>
   <form id="lockForm">
@@ -239,7 +257,7 @@ let photos = {};   // 이름 → 프로필 사진(trip_people)
 const avatar = name => photos[name]
   ? `<img class="who" src="${photos[name]}" alt="${esc(name)}" style="object-fit:cover">`
   : `<span class="who" style="background:${color(name)}">${esc(String(name).slice(0, 1))}</span>`;
-const KIND = { schedule: "일정", place: "장소", check: "준비물", expense: "경비", member: "인원" };
+const KIND = { schedule: "일정", place: "장소", check: "준비물", expense: "경비", member: "인원", setting: "설정" };
 const FIELD = { title: "제목", day: "날짜", time: "시간", memo: "메모", url: "링크", category: "분류", person: "담당", done: "챙김", amount: "금액" };
 
 function empty(e, t) { return `<div class="card"><div class="empty"><span class="e">${e}</span>${t}</div></div>`; }
@@ -268,7 +286,8 @@ function renderStats() {
   const counts = { visits: v.length, audit: data.audit.length, cheers: data.cheerTotal, bugs: newBugs };
   document.querySelectorAll("#seg button").forEach(b => {
     b.classList.toggle("on", b.dataset.tab === tab);
-    b.innerHTML = b.textContent.replace(/\s*\d+$/, "") + `<span class="n">${counts[b.dataset.tab]}</span>`;
+    const n = counts[b.dataset.tab];
+    b.innerHTML = b.textContent.replace(/\s*[\d,]+$/, "") + (n === undefined ? "" : `<span class="n">${n}</span>`);
   });
 }
 
@@ -389,9 +408,50 @@ function renderBugs() {
   return html + `</div>`;
 }
 
+// ─────────────────────────────────────────────────────────────
+// 설정 — 여행 암호 보기 · 복사 · 바꾸기, 관리자 암호 바꾸기
+// ─────────────────────────────────────────────────────────────
+const SITE = "https://jangjiwon0108.github.io/geoje-trip/";
+
+function renderSettings() {
+  const s = data.settings || {};
+  return `<div class="card"><div class="card-h"><h3>🔑 여행 암호</h3><span class="m">${s.trip_updated ? rel(s.trip_updated) + " 바꿈" : ""}</span></div>
+    <div class="set-body">
+      <div class="cur"><code>${esc(s.trip_pass || "")}</code>
+        <button class="abtn" data-copy="pass">복사</button><button class="abtn" data-copy="share">링크 + 암호 복사</button></div>
+      <form class="set-form" data-kind="trip">
+        <input name="p" placeholder="새 여행 암호 (4글자 이상)" autocomplete="off" autocapitalize="off" spellcheck="false" required minlength="4">
+        <button class="abtn ok">바꾸기</button></form>
+      <p class="hint">바꾸면 모든 사람이 새 암호를 한 번 다시 입력해야 해요</p>
+    </div></div>
+  <div class="card"><div class="card-h"><h3>🛠️ 관리자 암호</h3><span class="m">${s.admin_updated ? rel(s.admin_updated) + " 바꿈" : ""}</span></div>
+    <div class="set-body">
+      <form class="set-form" data-kind="admin">
+        <input type="password" name="p" placeholder="새 관리자 암호" autocomplete="new-password" required minlength="4">
+        <input type="password" name="p2" placeholder="한 번 더" autocomplete="new-password" required minlength="4">
+        <button class="abtn ok">바꾸기</button></form>
+      <p class="hint">관리자 암호는 원문을 저장하지 않아요. 잊어버리면 되찾을 수 없으니 꼭 적어 두세요</p>
+    </div></div>`;
+}
+
+let toastTimer;
+function toast(msg) {
+  const t = $("#toast");
+  t.textContent = msg;
+  t.classList.add("show");
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove("show"), 1800);
+}
+
+async function copy(text) {
+  try { await navigator.clipboard.writeText(text); toast("복사했어요"); }
+  catch (e) { prompt("아래 내용을 복사하세요", text); }
+}
+
 function render() {
   renderStats();
-  $("#view").innerHTML = { visits: renderVisits, audit: renderAudit, cheers: renderCheers, bugs: renderBugs }[tab]();
+  $("#view").innerHTML = { visits: renderVisits, audit: renderAudit, cheers: renderCheers, bugs: renderBugs,
+                           settings: renderSettings }[tab]();
 }
 
 // ─────────────────────────────────────────────────────────────
@@ -407,12 +467,12 @@ async function load() {
   const btn = $("#refresh");
   btn.classList.add("spin");
   try {
-    const [visits, audit, cheers, bugs, total, ppl] = await Promise.all([
+    const [visits, audit, cheers, bugs, total, ppl, settings] = await Promise.all([
       q("trip_visits"), q("trip_audit"), q("trip_cheers"), q("trip_bugs"), client.rpc("cheer_count"),
-      client.from("trip_people").select("name,photo"),
+      client.from("trip_people").select("name,photo"), client.rpc("admin_settings"),
     ]);
     photos = Object.fromEntries((ppl.data || []).filter(p => p.photo).map(p => [p.name, p.photo]));
-    data = { visits, audit, cheers, bugs, cheerTotal: Number(total.data || 0) };
+    data = { visits, audit, cheers, bugs, cheerTotal: Number(total.data || 0), settings: settings.data || {} };
     const p = n => String(n).padStart(2, "0"), d = new Date();
     $("#upd").textContent = `${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())} 기준`;
     render();
@@ -433,7 +493,27 @@ $("#seg").onclick = e => {
   render();
 };
 
+// 암호 바꾸기
+$("#view").addEventListener("submit", async e => {
+  e.preventDefault();
+  const form = e.target, kind = form.dataset.kind;
+  const p = form.p.value.trim();
+  if (kind === "admin" && p !== form.p2.value.trim()) return toast("두 번 적은 암호가 달라요");
+  const what = kind === "trip" ? "여행 암호" : "관리자 암호";
+  if (!confirm(kind === "trip" ? `여행 암호를 «${p}» 로 바꿀까요?\n모든 사람이 새 암호를 다시 입력해야 해요.` : `${what}를 바꿀까요?`)) return;
+  const { error } = await client.rpc("admin_set_pass", { kind, new_pass: p });
+  if (error) return toast("바꾸지 못했어요 — " + error.message);
+  if (kind === "admin") { localSet(KEY, p); connect(p); }   // 바꾼 암호로 계속 본다
+  toast(`${what}를 바꿨어요`);
+  load();
+});
+
 $("#view").onclick = async e => {
+  const cp = e.target.closest("[data-copy]");
+  if (cp) {
+    const pass = (data.settings || {}).trip_pass || "";
+    return copy(cp.dataset.copy === "pass" ? pass : `🏝️ 거제 여행\n${SITE}\n여행 암호: ${pass}`);
+  }
   const m = e.target.closest("[data-more]");
   if (m) { shown[m.dataset.more] += 100; return render(); }
   const f = e.target.closest("[data-filter]");
