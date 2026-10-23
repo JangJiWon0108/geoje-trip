@@ -260,13 +260,32 @@ img.who { display: block; object-fit: cover; background: var(--surface-2); }
    하단 탭바 · 추가 버튼
    ───────────────────────────────────────────────────────────── */
 .tabbar { position: fixed; left: 12px; right: 12px; bottom: calc(10px + var(--safe-b)); z-index: 20;
-          max-width: 300px; margin: 0 auto; display: grid; grid-template-columns: repeat(2, 1fr);
+          max-width: 380px; margin: 0 auto; display: grid; grid-template-columns: repeat(3, 1fr);
           background: var(--glass); backdrop-filter: saturate(180%) blur(18px); -webkit-backdrop-filter: saturate(180%) blur(18px);
           border-radius: 24px; box-shadow: 0 10px 30px rgba(10, 30, 40, .16); border: 1px solid var(--line); padding: 6px; }
 .tab { border: 0; background: transparent; padding: 7px 0 6px; border-radius: 18px; display: grid; justify-items: center; gap: 2px;
        color: var(--muted); font-size: 11px; font-weight: 700; cursor: pointer; transition: color .2s, background .2s; }
 .tab svg { width: 24px; height: 24px; }
 .tab.on { color: var(--brand); background: var(--brand-soft); }
+/* 동선 지도 */
+.map { height: 58vh; min-height: 340px; overflow: hidden; position: relative; isolation: isolate; z-index: 0; margin-bottom: 14px; }
+.map-loading { height: 100%; display: grid; place-items: center; color: var(--muted); font-size: 14px; }
+.pin { width: 34px; height: 34px; border-radius: 50% 50% 50% 0; transform: rotate(-45deg); background: var(--c);
+       border: 3px solid #fff; box-shadow: 0 4px 10px rgba(0, 0, 0, .3); display: grid; place-items: center; }
+.pin span { transform: rotate(45deg); color: #fff; font-weight: 900; font-size: 13px; }
+.leaflet-popup-content { font-family: inherit; font-size: 13px; }
+.route-list { padding: 6px 0; overflow: hidden; }
+.route-day { font-size: 12px; font-weight: 800; color: var(--muted); padding: 12px 16px 6px; letter-spacing: .02em; }
+.stop { display: flex; align-items: center; gap: 10px; padding: 9px 16px; cursor: pointer; }
+.stop:active { background: var(--surface-2); }
+.stop .num { width: 24px; height: 24px; border-radius: 50%; color: #fff; font-size: 12px; font-weight: 900; display: grid; place-items: center; flex: none; }
+.st-time { width: 42px; font-size: 13px; font-weight: 700; color: var(--muted); font-variant-numeric: tabular-nums; flex: none; }
+.st-main { min-width: 0; }
+.st-main b { display: block; font-size: 15px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.st-main small { color: var(--muted); font-size: 12px; }
+.leg { margin: 0 16px 0 28px; padding: 3px 0 3px 22px; border-left: 2px dashed var(--line); font-size: 12px; font-weight: 700; color: var(--muted); }
+.route-note { font-size: 12px; color: var(--muted); margin: 8px 4px 0; }
+
 .fab { position: fixed; right: 20px; bottom: calc(94px + var(--safe-b)); z-index: 21; width: 58px; height: 58px; border: 0;
        border-radius: 20px; color: #fff; cursor: pointer; display: grid; place-items: center;
        background: linear-gradient(145deg, var(--brand), var(--brand-2)); box-shadow: 0 10px 24px rgba(14, 124, 134, .4);
@@ -449,6 +468,9 @@ img.who { display: block; object-fit: cover; background: var(--surface-2); }
 <nav class="tabbar" id="tabs">
   <button class="tab" data-tab="schedule">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4.5" width="18" height="16" rx="4"/><path d="M3 9.5h18M8 3v3M16 3v3"/></svg>일정
+  </button>
+  <button class="tab" data-tab="route">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 4 3.5 6v14L9 18l6 2 5.5-2V4L15 6z"/><path d="M9 4v14M15 6v14"/></svg>동선
   </button>
   <button class="tab" data-tab="check">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 7h14l-1.2 11.2a2 2 0 0 1-2 1.8H8.2a2 2 0 0 1-2-1.8z"/><path d="M9 7a3 3 0 0 1 6 0M9.5 13l2 2 3.5-3.5"/></svg>준비물
@@ -640,7 +662,7 @@ let items = [];
 let slots = [], options = [];   // 끼니 · 카페 슬롯과 후보
 let loaded = false;
 // 장소 탭은 잠시 숨김(사용자, 2026-10-23) — 데이터 · renderPlace 는 남겨 두어 다시 켜려면 여기와 탭바 버튼만 되살린다
-const TABS = ["schedule", "check"];
+const TABS = ["schedule", "route", "check"];
 let tab = TABS.includes(lsGet(TAB_KEY)) ? lsGet(TAB_KEY) : "schedule";
 let placeFilter = "전체";
 
@@ -966,17 +988,186 @@ function renderCheck() {
   return html;
 }
 
+// ─────────────────────────────────────────────────────────────
+// 동선 — 고른 곳들을 시간순으로 지도에. 기차는 점선, 차는 실제 도로(OSRM)
+// ─────────────────────────────────────────────────────────────
+let routeDay = "all";
+const DAY_COLOR = ["#ff6b5a", "#0e8f8f", "#7c5cff"];
+let leafletP = null, map = null, mapLayer = null;
+
+function loadLeaflet() {
+  return leafletP ||= new Promise((ok, no) => {
+    const css = document.createElement("link");
+    css.rel = "stylesheet";
+    css.href = "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css";
+    document.head.appendChild(css);
+    const js = document.createElement("script");
+    js.src = "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js";
+    js.onload = () => ok(window.L);
+    js.onerror = no;
+    document.head.appendChild(js);
+  });
+}
+
+// 들를 곳 목록 — 일정(기차 · 숙소)과 고른 슬롯을 시간순으로
+function routeStops() {
+  const rows = [
+    ...byKind("schedule").map(r => ({ day: r.day, time: r.time, r })),
+    ...slots.map(s => ({ day: s.day, time: s.time, s })),
+  ].sort((a, b) => (a.day || "").localeCompare(b.day || "") || (a.time || "").localeCompare(b.time || ""));
+  const days = [...new Set(rows.map(x => x.day).filter(Boolean))];
+  const stops = [];
+  const push = p => {
+    const last = stops[stops.length - 1];
+    const same = last && last.day === p.day && Math.abs(last.lat - p.lat) < 1e-4 && Math.abs(last.lng - p.lng) < 1e-4;
+    if (!same) stops.push({ ...p, dayN: days.indexOf(p.day) });
+  };
+  for (const row of rows) {
+    const time = (row.time || "").slice(0, 5);
+    if (row.r) {
+      const g = row.r.geo;
+      if (!g) continue;
+      if (g.from) {
+        push({ day: row.day, time, name: g.from.name, lat: g.from.lat, lng: g.from.lng, ic: "🚄", label: "기차 출발" });
+        push({ day: row.day, time: g.to.time || "", name: g.to.name, lat: g.to.lat, lng: g.to.lng, ic: "🚉", label: "기차 도착", via: "train" });
+      } else if (g.at) {
+        push({ day: row.day, time, name: g.at.name, lat: g.at.lat, lng: g.at.lng, ic: g.end ? "🏁" : "🏠",
+               label: g.end ? "해산" : row.r.title.replace(/^🏠\s*/, "").split(" — ")[0] });
+      }
+    } else {
+      const o = chosenOf(row.s);
+      if (o && o.lat != null) push({ day: row.day, time, name: o.title, lat: o.lat, lng: o.lng, ic: slotIcon(row.s), label: row.s.title });
+    }
+  }
+  return stops;
+}
+
+// 차로 가는 구간 — 같은 날 연속 구간을 한 번에 물어보고, 결과는 기기에 기억한다
+async function carRoute(points) {
+  const key = "geoje-route:" + points.map(p => p.lng.toFixed(5) + "," + p.lat.toFixed(5)).join(";");
+  try { const c = lsGet(key); if (c) return JSON.parse(c); } catch (e) {}
+  const url = "https://router.project-osrm.org/route/v1/driving/" + points.map(p => `${p.lng},${p.lat}`).join(";")
+            + "?overview=full&geometries=geojson";
+  const r = await fetch(url);
+  const d = await r.json();
+  if (d.code !== "Ok") throw new Error(d.code);
+  const out = { line: d.routes[0].geometry.coordinates.map(([x, y]) => [y, x]),
+                legs: d.routes[0].legs.map(l => ({ km: l.distance / 1000, min: l.duration / 60 })) };
+  lsSet(key, JSON.stringify(out));
+  return out;
+}
+
+const fmtMin = m => m >= 60 ? `${Math.floor(m / 60)}시간 ${Math.round(m % 60)}분` : `${Math.round(m)}분`;
+
+function renderRoute() {
+  const stops = routeStops();
+  const days = [...new Set(stops.map(s => s.day))];
+  const chips = [["all", "전체"], ...days.map((d, i) => [d, `DAY ${i + 1}`])]
+    .map(([v, l]) => `<button class="chip${routeDay === v ? " on" : ""}" data-rday="${v}">${l}</button>`).join("");
+  return `<div class="sec-h"><h2>동선</h2><span class="meta" id="routeSum">${stops.length}곳</span></div>
+    <div class="chips">${chips}</div>
+    <div class="map card" id="map"><div class="map-loading">지도를 불러오는 중…</div></div>
+    <div id="routeList"></div>`;
+}
+
+async function drawRoute() {
+  const el = $("#map");
+  if (!el) return;
+  let L;
+  try { L = await loadLeaflet(); } catch (e) { el.innerHTML = `<div class="map-loading">지도를 불러오지 못했어요</div>`; return; }
+  if (!document.body.contains(el)) return;
+
+  const all = routeStops();
+  const stops = routeDay === "all" ? all : all.filter(s => s.day === routeDay);
+  el.innerHTML = "";
+  map = L.map(el, { zoomControl: false, attributionControl: true });
+  L.control.zoom({ position: "bottomright" }).addTo(map);
+  L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
+    maxZoom: 19, attribution: "© OpenStreetMap",
+  }).addTo(map);
+  mapLayer = L.layerGroup().addTo(map);
+  if (!stops.length) { map.setView([35.9, 127.8], 7); return; }
+
+  // 구간 나누기 — 기차 / 같은 날 차 구간 묶음
+  const legs = new Array(stops.length).fill(null);   // legs[i] = stops[i-1] → stops[i]
+  const runs = [];
+  for (let i = 1; i < stops.length; i++) {
+    const a = stops[i - 1], b = stops[i];
+    if (b.via === "train") { legs[i] = { mode: "train" }; continue; }
+    if (a.day !== b.day && routeDay === "all") {
+      // 다음 날 첫 곳 — 같은 숙소에서 시작하면 구간 없음
+    }
+    const run = runs[runs.length - 1];
+    if (run && run.end === i - 1 && run.day === b.day) { run.idx.push(i); run.end = i; }
+    else runs.push({ day: b.day, dayN: b.dayN, start: i - 1, end: i, idx: [i] });
+  }
+
+  // 기차 점선
+  for (let i = 1; i < stops.length; i++) if (legs[i]?.mode === "train")
+    L.polyline([[stops[i - 1].lat, stops[i - 1].lng], [stops[i].lat, stops[i].lng]],
+      { color: "#64748b", weight: 3, dashArray: "6 9", opacity: .9 }).addTo(mapLayer);
+
+  // 차 — 실제 도로
+  let km = 0, min = 0;
+  for (const run of runs) {
+    const pts = stops.slice(run.start, run.end + 1);
+    const color = DAY_COLOR[run.dayN] || DAY_COLOR[0];
+    try {
+      const r = await carRoute(pts);
+      if (!document.body.contains(el)) return;
+      L.polyline(r.line, { color: "#fff", weight: 9, opacity: .9 }).addTo(mapLayer);
+      L.polyline(r.line, { color, weight: 5, opacity: .95 }).addTo(mapLayer);
+      r.legs.forEach((l, k) => { legs[run.idx[k]] = { mode: "car", ...l }; km += l.km; min += l.min; });
+    } catch (e) {
+      L.polyline(pts.map(p => [p.lat, p.lng]), { color, weight: 4, dashArray: "2 8" }).addTo(mapLayer);
+      run.idx.forEach(i => { legs[i] = { mode: "car" }; });
+    }
+  }
+
+  // 번호 핀
+  stops.forEach((s, i) => {
+    const icon = L.divIcon({ className: "", iconSize: [34, 34], iconAnchor: [17, 17],
+      html: `<div class="pin" style="--c:${DAY_COLOR[s.dayN] || DAY_COLOR[0]}"><span>${i + 1}</span></div>` });
+    L.marker([s.lat, s.lng], { icon }).addTo(mapLayer)
+      .bindPopup(`<b>${i + 1}. ${s.ic} ${esc(s.name)}</b><br>${esc(dayLabel(s.day))} ${esc(s.time)} · ${esc(s.label)}`);
+  });
+  map.fitBounds(L.latLngBounds(stops.map(s => [s.lat, s.lng])), { padding: [36, 36] });
+
+  // 아래 목록 — 들르는 순서와 구간 거리 · 시간
+  $("#routeSum").textContent = `${stops.length}곳 · 🚗 ${Math.round(km)}km · ${fmtMin(min)}`;
+  let html = `<div class="route-list card">`, cur = null;
+  stops.forEach((s, i) => {
+    const leg = legs[i];
+    if (leg && s.day === cur) html += `<div class="leg">${leg.mode === "train" ? "🚄 기차 (SRT)"
+      : leg.km != null ? `🚗 ${leg.km.toFixed(leg.km < 10 ? 1 : 0)}km · ${fmtMin(leg.min)}` : "🚗 이동"}</div>`;
+    if (s.day !== cur) { cur = s.day; html += `<div class="route-day">DAY ${s.dayN + 1} · ${esc(dayLabel(s.day))}</div>`; }
+    html += `<div class="stop" data-stop-i="${i}"><span class="num" style="background:${DAY_COLOR[s.dayN] || DAY_COLOR[0]}">${i + 1}</span>
+      <span class="st-time">${esc(s.time || "")}</span><div class="st-main"><b>${s.ic} ${esc(s.name)}</b><small>${esc(s.label)}</small></div></div>`;
+  });
+  $("#routeList").innerHTML = html + `</div><p class="route-note">고른 곳만 이어서 그려요. 거리 · 시간은 길찾기(OSRM) 어림값이에요.</p>`;
+  $("#routeList").onclick = e => {
+    const st = e.target.closest("[data-stop-i]");
+    if (!st) return;
+    const s = stops[+st.dataset.stopI];
+    map.setView([s.lat, s.lng], 14, { animate: true });
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+}
+
 function render() {
   document.querySelectorAll(".tab").forEach(b => b.classList.toggle("on", b.dataset.tab === tab));
+  $("#fab").style.display = tab === "route" ? "none" : "";
   const sync = $("#sync");
   sync.classList.toggle("demo", !remote);
   sync.querySelector("span").textContent = remote ? "함께 보는 중" : "데모";
   if (!loaded) { $("#view").innerHTML = `<div class="skeleton"></div><div class="skeleton"></div><div class="skeleton"></div>`; return; }
   renderHero();
-  const view = { schedule: renderSchedule, place: renderPlace, check: renderCheck }[tab];
+  const view = { schedule: renderSchedule, route: renderRoute, place: renderPlace, check: renderCheck }[tab];
   const note = !remote ? `<div class="notice">데모 모드 — 이 브라우저에만 저장돼요</div>`
              : errMsg ? `<div class="notice err">${esc(errMsg)}</div>` : "";
+  if (map) { map.remove(); map = null; }
   $("#view").innerHTML = note + view();
+  if (tab === "route") drawRoute();
 }
 
 async function reload() {
@@ -1276,6 +1467,8 @@ $("#view").onclick = async e => {
   if (edit) return openSheet("check", find(edit.dataset.edit));
   const add = e.target.closest("[data-add]");
   if (add) return openSheet(add.dataset.add);
+  const rd = e.target.closest("[data-rday]");
+  if (rd) { routeDay = rd.dataset.rday; return render(); }
   const filter = e.target.closest("[data-filter]");
   if (filter) { placeFilter = filter.dataset.filter; return render(); }
 
