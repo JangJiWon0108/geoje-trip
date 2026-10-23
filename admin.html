@@ -1,0 +1,497 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<title>거제 여행 · 관리자</title>
+<meta name="theme-color" content="#0f1a1f">
+<link rel="icon" type="image/png" href="icons/icon-192.png">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<style>
+/* ─────────────────────────────────────────────────────────────
+   토큰
+   ───────────────────────────────────────────────────────────── */
+:root {
+  --bg: #f2f5f7; --surface: #fff; --surface-2: #f5f7f9; --text: #121a1f; --muted: #6b7a83;
+  --line: rgba(15, 35, 45, .08); --brand: #0e7c86; --brand-soft: rgba(14, 124, 134, .1);
+  --coral: #ff5a4e; --ok: #1fa37a; --amber: #e8a317; --violet: #7c5cff;
+  --shadow: 0 1px 2px rgba(16, 40, 50, .04), 0 6px 20px rgba(16, 40, 50, .06);
+  --safe-t: env(safe-area-inset-top, 0px); --safe-b: env(safe-area-inset-bottom, 0px);
+}
+@media (prefers-color-scheme: dark) {
+  :root { --bg: #0b1114; --surface: #141c20; --surface-2: #1a2429; --text: #e9f0f2; --muted: #8d9ca3;
+          --line: rgba(255, 255, 255, .07); --brand: #3cc7c0; --brand-soft: rgba(60, 199, 192, .14);
+          --shadow: 0 1px 2px rgba(0, 0, 0, .3), 0 8px 24px rgba(0, 0, 0, .25); }
+}
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+body { margin: 0; background: var(--bg); color: var(--text); font-size: 15px; line-height: 1.45; letter-spacing: -0.01em;
+       font-family: "Pretendard Variable", Pretendard, -apple-system, "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
+       -webkit-font-smoothing: antialiased; }
+button { font: inherit; color: inherit; }
+
+/* 머리 */
+.top { background: linear-gradient(150deg, #0f1a1f 0%, #15303a 60%, #0e5560 100%); color: #fff;
+       padding: calc(var(--safe-t) + 20px) 18px 64px; }
+.top-in { max-width: 960px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.top .k { font-size: 12px; font-weight: 700; letter-spacing: .22em; opacity: .6; }
+.top h1 { margin: 4px 0 0; font-size: 26px; font-weight: 800; letter-spacing: -0.03em; }
+.top .upd { font-size: 12px; opacity: .6; margin-top: 2px; }
+.top-btns { display: flex; gap: 8px; }
+.tbtn { border: 1px solid rgba(255, 255, 255, .22); background: rgba(255, 255, 255, .1); color: #fff; border-radius: 12px;
+        padding: 8px 12px; font-size: 13px; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; }
+.tbtn:active { transform: scale(.96); }
+.tbtn.spin svg { animation: spin .8s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+main { max-width: 960px; margin: -44px auto 0; padding: 0 14px calc(40px + var(--safe-b)); }
+
+/* 요약 카드 */
+.stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 16px; }
+@media (min-width: 720px) { .stats { grid-template-columns: repeat(6, 1fr); } }
+.stat { background: var(--surface); border-radius: 18px; padding: 14px; box-shadow: var(--shadow); }
+.stat .l { font-size: 12px; font-weight: 700; color: var(--muted); display: flex; gap: 5px; align-items: center; }
+.stat .v { font-size: 26px; font-weight: 800; letter-spacing: -0.03em; margin-top: 2px; font-variant-numeric: tabular-nums; }
+.stat .s { font-size: 12px; color: var(--muted); }
+.stat.hot .v { color: var(--coral); }
+
+/* 탭 */
+.seg { display: flex; gap: 4px; background: var(--surface); padding: 5px; border-radius: 16px; box-shadow: var(--shadow);
+       position: sticky; top: calc(var(--safe-t) + 8px); z-index: 5; margin-bottom: 14px; overflow-x: auto; }
+.seg button { flex: 1; min-width: 72px; border: 0; background: transparent; border-radius: 12px; padding: 10px 8px;
+              font-size: 14px; font-weight: 700; color: var(--muted); cursor: pointer; white-space: nowrap; }
+.seg button.on { background: var(--text); color: var(--bg); }
+.seg .n { font-size: 11px; opacity: .65; margin-left: 3px; }
+
+/* 공통 목록 */
+.card { background: var(--surface); border-radius: 18px; box-shadow: var(--shadow); overflow: hidden; margin-bottom: 12px; }
+.card-h { display: flex; justify-content: space-between; align-items: baseline; padding: 14px 16px 6px; }
+.card-h h3 { margin: 0; font-size: 15px; font-weight: 800; }
+.card-h .m { font-size: 12px; color: var(--muted); }
+.row { display: flex; gap: 12px; align-items: flex-start; padding: 12px 16px; }
+.row + .row { border-top: 1px solid var(--line); }
+.row .main { flex: 1; min-width: 0; }
+.row .t { font-weight: 700; word-break: break-word; }
+.row .s { font-size: 13px; color: var(--muted); word-break: break-word; }
+.stat .v.txt { font-size: 18px; padding: 5px 0 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.when { font-size: 12px; color: var(--muted); text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.when b { display: block; color: var(--text); font-weight: 700; }
+.who { width: 34px; height: 34px; border-radius: 50%; flex: none; display: grid; place-items: center;
+       color: #fff; font-weight: 800; font-size: 14px; }
+.badge { display: inline-block; font-size: 11px; font-weight: 800; padding: 2px 8px; border-radius: 8px; margin-right: 6px; vertical-align: 1px; }
+.b-insert { background: rgba(31, 163, 122, .14); color: var(--ok); }
+.b-update { background: rgba(124, 92, 255, .14); color: var(--violet); }
+.b-delete { background: rgba(255, 90, 78, .14); color: var(--coral); }
+.b-kind { background: var(--surface-2); color: var(--muted); }
+.diff { margin-top: 4px; display: grid; gap: 2px; font-size: 13px; }
+.diff span { color: var(--muted); }
+.diff del { color: var(--coral); text-decoration: line-through; }
+.diff ins { color: var(--ok); text-decoration: none; font-weight: 600; }
+.empty { text-align: center; color: var(--muted); padding: 36px 16px; }
+.empty .e { font-size: 36px; display: block; margin-bottom: 6px; }
+.more { width: 100%; border: 0; background: transparent; padding: 12px; color: var(--brand); font-weight: 700; cursor: pointer; border-top: 1px solid var(--line); }
+
+/* 사람별 · 순위 */
+.people { display: grid; gap: 0; }
+.bar { height: 8px; border-radius: 99px; background: var(--surface-2); margin-top: 6px; overflow: hidden; }
+.bar i { display: block; height: 100%; border-radius: 99px; background: linear-gradient(90deg, #ff8fab, #ff4d6d); }
+.rank { width: 26px; font-weight: 800; color: var(--muted); text-align: center; padding-top: 6px; }
+.big-cheer { text-align: center; padding: 22px 16px 18px; background: linear-gradient(145deg, #ff6f91, #ff9671); color: #fff; }
+.big-cheer .v { font-size: 46px; font-weight: 900; letter-spacing: -0.04em; font-variant-numeric: tabular-nums; }
+.big-cheer .l { font-size: 13px; opacity: .9; font-weight: 700; }
+
+/* 문의 */
+.filters { display: flex; gap: 6px; margin: 0 2px 10px; }
+.chip { border: 0; background: var(--surface); box-shadow: var(--shadow); border-radius: 99px; padding: 7px 13px; font-size: 13px; font-weight: 700; cursor: pointer; }
+.chip.on { background: var(--text); color: var(--bg); }
+.bug { padding: 14px 16px; }
+.bug + .bug { border-top: 1px solid var(--line); }
+.bug .cat { font-weight: 800; }
+.bug .content { margin: 6px 0 8px; white-space: pre-wrap; word-break: break-word; }
+.bug .meta { font-size: 12px; color: var(--muted); }
+.bug.done { opacity: .55; }
+.bug-act { display: flex; gap: 6px; margin-top: 10px; }
+.abtn { border: 0; border-radius: 10px; padding: 7px 12px; font-size: 13px; font-weight: 700; cursor: pointer; background: var(--surface-2); }
+.abtn.ok { background: rgba(31, 163, 122, .14); color: var(--ok); }
+.abtn.del { color: var(--coral); }
+.new-dot { display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: var(--coral); margin-left: 6px; vertical-align: 2px; }
+
+/* 잠금 */
+.lock { position: fixed; inset: 0; z-index: 50; display: grid; place-items: center; padding: 24px; color: #fff;
+        background: radial-gradient(120% 80% at 80% 0%, #1f5e68 0%, transparent 60%), #0b1418; }
+.lock[hidden] { display: none; }
+.lock form { width: 100%; max-width: 340px; text-align: center; }
+.lock .e { font-size: 52px; }
+.lock h2 { margin: 10px 0 4px; font-size: 26px; font-weight: 800; }
+.lock p { margin: 0 0 22px; opacity: .65; font-size: 14px; }
+.lock input { width: 100%; height: 56px; border: 1px solid rgba(255, 255, 255, .18); background: rgba(255, 255, 255, .08); color: #fff;
+              border-radius: 16px; padding: 0 16px; font: inherit; font-size: 17px; outline: none; text-align: center; letter-spacing: .06em; }
+.lock input:focus { border-color: rgba(255, 255, 255, .5); }
+.lock button { width: 100%; height: 56px; margin-top: 10px; border: 0; border-radius: 16px; background: #fff; color: #0f1a1f;
+               font-size: 16px; font-weight: 800; cursor: pointer; }
+.lock .err { min-height: 20px; margin-top: 12px; color: #ffb4a8; font-size: 14px; font-weight: 600; }
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="top-in">
+    <div>
+      <div class="k">GEOJE TRIP · ADMIN</div>
+      <h1>관리자 화면</h1>
+      <div class="upd" id="upd">불러오는 중</div>
+    </div>
+    <div class="top-btns">
+      <button class="tbtn" id="refresh"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M20 11a8 8 0 1 0-2.3 5.7M20 4v7h-7"/></svg>새로고침</button>
+      <button class="tbtn" id="logout">나가기</button>
+    </div>
+  </div>
+</header>
+
+<main>
+  <div class="stats" id="stats"></div>
+  <nav class="seg" id="seg">
+    <button data-tab="visits">접속 로그</button>
+    <button data-tab="audit">수정 내역</button>
+    <button data-tab="cheers">응원</button>
+    <button data-tab="bugs">문의</button>
+  </nav>
+  <div id="view"></div>
+</main>
+
+<div class="lock" id="lock" hidden>
+  <form id="lockForm">
+    <div class="e">🛠️</div>
+    <h2>관리자 전용</h2>
+    <p>관리자 암호를 입력해 주세요</p>
+    <input id="lockInput" type="password" placeholder="관리자 암호" autocomplete="current-password" autocapitalize="off">
+    <button>들어가기</button>
+    <div class="err" id="lockErr"></div>
+  </form>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+<script>
+// ─────────────────────────────────────────────────────────────
+// 설정 — index.html 과 같은 프로젝트. 읽기는 관리자 암호(x-admin-key)를 RLS 가 검사한다
+// ─────────────────────────────────────────────────────────────
+const CONFIG = {
+  SUPABASE_URL: "https://yijkbqygdiscaunzhrvy.supabase.co",
+  SUPABASE_ANON_KEY: "sb_publishable_kymzTMwNQpia-oz05r63Qg_4AaR1NJo",
+};
+const KEY = "geoje-admin-key";
+const TAB_KEY = "geoje-admin-tab";
+const LIMIT = 1000;
+
+let client = null;
+let data = { visits: [], audit: [], cheers: [], bugs: [], cheerTotal: 0 };
+let tab = localGet(TAB_KEY) || "visits";
+let bugFilter = "new";
+const shown = { visits: 50, audit: 50, cheers: 30 };
+
+function localGet(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }
+function localSet(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
+function localDel(k) { try { localStorage.removeItem(k); } catch (e) {} }
+
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c =>
+  ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+
+function connect(key) {
+  client = supabase.createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_ANON_KEY, {
+    auth: { persistSession: false },
+    global: { headers: { "x-admin-key": key } },
+  });
+}
+
+// ─────────────────────────────────────────────────────────────
+// 표시 도우미 — 시간 · 기기 · 사람 색
+// ─────────────────────────────────────────────────────────────
+const WEEK = "일월화수목금토";
+function rel(ts) {
+  const s = Math.round((Date.now() - new Date(ts)) / 1000);
+  return s < 60 ? "방금" : s < 3600 ? `${Math.floor(s / 60)}분 전` : s < 86400 ? `${Math.floor(s / 3600)}시간 전` : `${Math.floor(s / 86400)}일 전`;
+}
+function when(ts) {
+  const d = new Date(ts), p = n => String(n).padStart(2, "0");
+  const abs = `${d.getMonth() + 1}/${d.getDate()}(${WEEK[d.getDay()]}) ${p(d.getHours())}:${p(d.getMinutes())}`;
+  return `<div class="when"><b>${rel(ts)}</b>${abs}</div>`;
+}
+const isToday = ts => new Date(ts).toDateString() === new Date().toDateString();
+
+function device(ua) {
+  ua = ua || "";
+  const os = /iPhone|iPad|iPod/.test(ua) ? "iPhone" : /Android/.test(ua) ? "Android" : /Windows/.test(ua) ? "Windows"
+           : /Mac OS/.test(ua) ? "Mac" : "기타";
+  const br = /KAKAOTALK/i.test(ua) ? "카카오톡" : /NAVER/.test(ua) ? "네이버앱" : /SamsungBrowser/.test(ua) ? "삼성인터넷"
+           : /Edg\//.test(ua) ? "Edge" : /CriOS|Chrome/.test(ua) ? "Chrome" : /Safari/.test(ua) ? "Safari" : /Firefox/.test(ua) ? "Firefox" : "브라우저";
+  return `${os} · ${br}`;
+}
+
+const HUES = [186, 12, 262, 145, 35, 330, 210];
+function color(name) {
+  let h = 0;
+  for (const ch of String(name)) h = (h * 31 + ch.charCodeAt(0)) >>> 0;
+  return `hsl(${HUES[h % HUES.length]} 62% 48%)`;
+}
+const personOf = r => r.name || (r.device_id ? "익명 " + r.device_id.slice(0, 4) : "익명");
+const avatar = name => `<span class="who" style="background:${color(name)}">${esc(String(name).slice(0, 1))}</span>`;
+const KIND = { schedule: "일정", place: "장소", check: "준비물", expense: "경비", member: "인원" };
+const FIELD = { title: "제목", day: "날짜", time: "시간", memo: "메모", url: "링크", category: "분류", person: "담당", done: "챙김", amount: "금액" };
+
+function empty(e, t) { return `<div class="card"><div class="empty"><span class="e">${e}</span>${t}</div></div>`; }
+function more(key, total) {
+  return total > shown[key] ? `<button class="more" data-more="${key}">더 보기 (${total - shown[key]}개 남음)</button>` : "";
+}
+
+// ─────────────────────────────────────────────────────────────
+// 요약
+// ─────────────────────────────────────────────────────────────
+function renderStats() {
+  const v = data.visits;
+  const people = new Set(v.map(personOf));
+  const newBugs = data.bugs.filter(b => b.status === "new").length;
+  const cards = [
+    ["👀", "오늘 접속", v.filter(r => isToday(r.created_at)).length, `전체 ${v.length}`],
+    ["🙋", "들어온 사람", people.size, "이름 · 기기 기준"],
+    ["✏️", "수정", data.audit.length, `오늘 ${data.audit.filter(r => isToday(r.created_at)).length}`],
+    ["💖", "응원", data.cheerTotal.toLocaleString("ko-KR"), `오늘 ${data.cheers.filter(r => isToday(r.created_at)).length}`],
+    ["🐞", "새 문의", newBugs, `전체 ${data.bugs.length}`, newBugs > 0],
+    ["🕒", "마지막 접속", v[0] ? personOf(v[0]) : "–", v[0] ? rel(v[0].created_at) : ""],
+  ];
+  $("#stats").innerHTML = cards.map(([e, l, val, s, hot]) =>
+    `<div class="stat${hot ? " hot" : ""}"><div class="l">${e} ${l}</div>
+      <div class="v${/^[\d,]+$/.test(String(val)) ? "" : " txt"}">${esc(val)}</div><div class="s">${esc(s)}</div></div>`).join("");
+  const counts = { visits: v.length, audit: data.audit.length, cheers: data.cheerTotal, bugs: newBugs };
+  document.querySelectorAll("#seg button").forEach(b => {
+    b.classList.toggle("on", b.dataset.tab === tab);
+    b.innerHTML = b.textContent.replace(/\s*\d+$/, "") + `<span class="n">${counts[b.dataset.tab]}</span>`;
+  });
+}
+
+// ─────────────────────────────────────────────────────────────
+// 접속 로그 — 사람별 요약 + 시간순
+// ─────────────────────────────────────────────────────────────
+function renderVisits() {
+  const v = data.visits;
+  if (!v.length) return empty("👀", "아직 접속 기록이 없어요");
+  const by = new Map();
+  for (const r of v) {
+    const k = personOf(r);
+    if (!by.has(k)) by.set(k, { n: 0, last: r, devices: new Set() });
+    const g = by.get(k);
+    g.n++;
+    g.devices.add(device(r.user_agent));
+  }
+  let html = `<div class="card"><div class="card-h"><h3>사람별</h3><span class="m">${by.size}명</span></div><div class="people">`;
+  for (const [name, g] of by) {
+    html += `<div class="row">${avatar(name)}<div class="main"><div class="t">${esc(name)}</div>
+      <div class="s">${g.n}번 접속 · ${esc([...g.devices].join(", "))}</div></div>${when(g.last.created_at)}</div>`;
+  }
+  html += `</div></div><div class="card"><div class="card-h"><h3>접속 기록</h3><span class="m">최근 ${Math.min(v.length, LIMIT)}건</span></div>`;
+  for (const r of v.slice(0, shown.visits)) {
+    const name = personOf(r);
+    html += `<div class="row">${avatar(name)}<div class="main"><div class="t">${esc(name)}</div>
+      <div class="s">${esc(device(r.user_agent))} · ${esc(r.ip || "IP 없음")}${r.country ? " · " + esc(r.country) : ""}</div></div>${when(r.created_at)}</div>`;
+  }
+  return html + more("visits", v.length) + `</div>`;
+}
+
+// ─────────────────────────────────────────────────────────────
+// 수정 내역 — 무엇이 어떻게 바뀌었는지
+// ─────────────────────────────────────────────────────────────
+function show(k, v) {
+  if (v === null || v === undefined || v === "") return "(비어 있음)";
+  if (k === "done") return v ? "챙김" : "안 챙김";
+  if (k === "time") return String(v).slice(0, 5);
+  return String(v);
+}
+
+function diff(r) {
+  const a = r.before || {}, b = r.after || {};
+  if (r.action !== "update") {
+    const src = r.action === "insert" ? b : a;
+    const keys = Object.keys(FIELD).filter(k => k !== "title" && src[k] !== null && src[k] !== undefined && src[k] !== "" && !(k === "done" && !src[k]));
+    return keys.map(k => `<div><span>${FIELD[k]}</span> ${esc(show(k, src[k]))}</div>`).join("");
+  }
+  return Object.keys(FIELD).filter(k => JSON.stringify(a[k]) !== JSON.stringify(b[k]))
+    .map(k => `<div><span>${FIELD[k]}</span> <del>${esc(show(k, a[k]))}</del> → <ins>${esc(show(k, b[k]))}</ins></div>`).join("");
+}
+
+function renderAudit() {
+  const rows = data.audit;
+  if (!rows.length) return empty("✏️", "아직 수정한 사람이 없어요");
+  const label = { insert: "추가", update: "수정", delete: "삭제" };
+  let html = `<div class="card"><div class="card-h"><h3>수정 내역</h3><span class="m">${rows.length}건</span></div>`;
+  for (const r of rows.slice(0, shown.audit)) {
+    const name = personOf(r);
+    html += `<div class="row">${avatar(name)}<div class="main">
+      <div class="t"><span class="badge b-${r.action}">${label[r.action] || r.action}</span><span class="badge b-kind">${KIND[r.kind] || r.kind}</span>${esc(r.title)}</div>
+      <div class="s">${esc(name)}${r.ip ? " · " + esc(r.ip) : ""}</div>
+      <div class="diff">${diff(r)}</div></div>${when(r.created_at)}</div>`;
+  }
+  return html + more("audit", rows.length) + `</div>`;
+}
+
+// ─────────────────────────────────────────────────────────────
+// 응원 — 전체 횟수 · 순위 · 최근
+// ─────────────────────────────────────────────────────────────
+function renderCheers() {
+  const rows = data.cheers;
+  let html = `<div class="card"><div class="big-cheer"><div class="l">💖 지금까지 받은 응원</div>
+    <div class="v">${data.cheerTotal.toLocaleString("ko-KR")}</div><div class="l">오늘 ${rows.filter(r => isToday(r.created_at)).length}번</div></div></div>`;
+  if (!rows.length) return html + empty("🥲", "아직 응원이 없어요");
+
+  const by = new Map();
+  for (const r of rows) { const k = personOf(r); by.set(k, (by.get(k) || 0) + 1); }
+  const rank = [...by.entries()].sort((a, b) => b[1] - a[1]);
+  const top = rank[0][1];
+  html += `<div class="card"><div class="card-h"><h3>응원 순위</h3><span class="m">${rank.length}명</span></div>`;
+  rank.forEach(([name, n], i) => {
+    html += `<div class="row"><div class="rank">${["🥇", "🥈", "🥉"][i] || i + 1}</div>${avatar(name)}<div class="main">
+      <div class="t">${esc(name)} <span style="color:var(--muted);font-weight:600">${n.toLocaleString("ko-KR")}번</span></div>
+      <div class="bar"><i style="width:${Math.max(4, n / top * 100)}%"></i></div></div></div>`;
+  });
+  html += `</div><div class="card"><div class="card-h"><h3>최근 응원</h3><span class="m">${rows.length}건</span></div>`;
+  for (const r of rows.slice(0, shown.cheers)) {
+    const name = personOf(r);
+    html += `<div class="row">${avatar(name)}<div class="main"><div class="t">${esc(name)} 님이 응원했어요</div>
+      <div class="s">${esc(r.ip || "")}</div></div>${when(r.created_at)}</div>`;
+  }
+  return html + more("cheers", rows.length) + `</div>`;
+}
+
+// ─────────────────────────────────────────────────────────────
+// 문의 — 확인함 표시 · 삭제
+// ─────────────────────────────────────────────────────────────
+function renderBugs() {
+  const all = data.bugs;
+  const rows = bugFilter === "new" ? all.filter(b => b.status === "new") : all;
+  const nNew = all.filter(b => b.status === "new").length;
+  let html = `<div class="filters"><button class="chip${bugFilter === "new" ? " on" : ""}" data-filter="new">새 문의 ${nNew}</button>
+    <button class="chip${bugFilter === "all" ? " on" : ""}" data-filter="all">전체 ${all.length}</button></div>`;
+  if (!rows.length) return html + empty("🎉", bugFilter === "new" ? "새 문의가 없어요" : "아직 문의가 없어요");
+  html += `<div class="card">`;
+  for (const b of rows) {
+    const name = personOf(b);
+    html += `<div class="bug${b.status === "done" ? " done" : ""}">
+      <div style="display:flex;gap:12px;align-items:flex-start">${avatar(name)}<div style="flex:1;min-width:0">
+        <div class="cat">${esc(b.category || "문의")}${b.status === "new" ? `<span class="new-dot"></span>` : ""}</div>
+        <div class="content">${esc(b.content)}</div>
+        <div class="meta">${esc(name)} · ${esc(device(b.user_agent))}${b.ip ? " · " + esc(b.ip) : ""}</div>
+      </div>${when(b.created_at)}</div>
+      <div class="bug-act"><button class="abtn ok" data-status="${b.id}">${b.status === "new" ? "✓ 확인함" : "↺ 새 문의로"}</button>
+        <button class="abtn del" data-del="${b.id}">삭제</button></div></div>`;
+  }
+  return html + `</div>`;
+}
+
+function render() {
+  renderStats();
+  $("#view").innerHTML = { visits: renderVisits, audit: renderAudit, cheers: renderCheers, bugs: renderBugs }[tab]();
+}
+
+// ─────────────────────────────────────────────────────────────
+// 불러오기
+// ─────────────────────────────────────────────────────────────
+async function q(table) {
+  const { data: rows, error } = await client.from(table).select("*").order("created_at", { ascending: false }).limit(LIMIT);
+  if (error) throw error;
+  return rows;
+}
+
+async function load() {
+  const btn = $("#refresh");
+  btn.classList.add("spin");
+  try {
+    const [visits, audit, cheers, bugs, total] = await Promise.all([
+      q("trip_visits"), q("trip_audit"), q("trip_cheers"), q("trip_bugs"), client.rpc("cheer_count"),
+    ]);
+    data = { visits, audit, cheers, bugs, cheerTotal: Number(total.data || 0) };
+    const p = n => String(n).padStart(2, "0"), d = new Date();
+    $("#upd").textContent = `${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())} 기준`;
+    render();
+  } catch (e) {
+    $("#upd").textContent = "불러오지 못했어요 — " + (e.message || e);
+  }
+  btn.classList.remove("spin");
+}
+
+// ─────────────────────────────────────────────────────────────
+// 이벤트
+// ─────────────────────────────────────────────────────────────
+$("#seg").onclick = e => {
+  const b = e.target.closest("button[data-tab]");
+  if (!b) return;
+  tab = b.dataset.tab;
+  localSet(TAB_KEY, tab);
+  render();
+};
+
+$("#view").onclick = async e => {
+  const m = e.target.closest("[data-more]");
+  if (m) { shown[m.dataset.more] += 100; return render(); }
+  const f = e.target.closest("[data-filter]");
+  if (f) { bugFilter = f.dataset.filter; return render(); }
+  const s = e.target.closest("[data-status]");
+  if (s) {
+    const b = data.bugs.find(x => String(x.id) === s.dataset.status);
+    const status = b.status === "new" ? "done" : "new";
+    b.status = status;
+    render();
+    const { error } = await client.from("trip_bugs").update({ status }).eq("id", b.id);
+    if (error) { alert("바꾸지 못했어요: " + error.message); load(); }
+    return;
+  }
+  const d = e.target.closest("[data-del]");
+  if (d) {
+    if (!confirm("이 문의를 지울까요?")) return;
+    data.bugs = data.bugs.filter(x => String(x.id) !== d.dataset.del);
+    render();
+    const { error } = await client.from("trip_bugs").delete().eq("id", d.dataset.del);
+    if (error) { alert("지우지 못했어요: " + error.message); load(); }
+  }
+};
+
+$("#refresh").onclick = load;
+$("#logout").onclick = () => { localDel(KEY); location.reload(); };
+document.addEventListener("visibilitychange", () => { if (!document.hidden && client && $("#lock").hidden) load(); });
+
+// ─────────────────────────────────────────────────────────────
+// 시작 — 관리자 암호 확인
+// ─────────────────────────────────────────────────────────────
+async function check(key) {
+  connect(key);
+  const { data: ok, error } = await client.rpc("admin_ok");
+  if (error) throw error;
+  return ok === true;
+}
+
+$("#lockForm").onsubmit = async e => {
+  e.preventDefault();
+  const key = $("#lockInput").value.trim();
+  if (!key) return;
+  try {
+    if (await check(key)) {
+      localSet(KEY, key);
+      $("#lock").hidden = true;
+      return load();
+    }
+    $("#lockErr").textContent = "암호가 맞지 않아요";
+  } catch (err) {
+    $("#lockErr").textContent = "연결하지 못했어요";
+  }
+};
+
+(async () => {
+  const saved = localGet(KEY);
+  if (saved) {
+    try { if (await check(saved)) return load(); } catch (e) {}
+    localDel(KEY);
+  }
+  $("#lock").hidden = false;
+  setTimeout(() => $("#lockInput").focus(), 100);
+})();
+</script>
+</body>
+</html>
