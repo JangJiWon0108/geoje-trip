@@ -1,0 +1,453 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>거제 여행</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌊</text></svg>">
+<style>
+:root {
+  --bg: #f4f7f8; --card: #ffffff; --text: #1d2a30; --muted: #66767d; --line: #dde5e8;
+  --accent: #0b7a8f; --accent-soft: #e2f2f5; --danger: #c0392b; --ok: #2e8b57;
+}
+@media (prefers-color-scheme: dark) {
+  :root { --bg: #11181b; --card: #1a2327; --text: #e6eef0; --muted: #94a5ab; --line: #2b383d;
+          --accent: #4fc0d3; --accent-soft: #1d3a40; --danger: #e57366; --ok: #5cc28a; }
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--text);
+       font: 15px/1.5 -apple-system, "Apple SD Gothic Neo", "Malgun Gothic", sans-serif; }
+header { background: var(--accent); color: #fff; padding: 18px 16px 0; }
+header h1 { margin: 0; font-size: 20px; }
+header .sub { opacity: .85; font-size: 13px; margin: 2px 0 12px; }
+nav { display: flex; gap: 4px; overflow-x: auto; }
+nav button { flex: 1; min-width: 70px; border: 0; background: transparent; color: #fff; opacity: .7;
+             padding: 10px 6px; font-size: 15px; border-bottom: 3px solid transparent; cursor: pointer; }
+nav button.on { opacity: 1; border-bottom-color: #fff; font-weight: 600; }
+main { max-width: 720px; margin: 0 auto; padding: 16px; }
+.banner { background: var(--accent-soft); border-radius: 8px; padding: 10px 12px; font-size: 13px; margin-bottom: 12px; }
+.banner.err { color: var(--danger); }
+.bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; gap: 8px; }
+.bar h2 { margin: 0; font-size: 17px; }
+.btn { border: 1px solid var(--line); background: var(--card); color: var(--text); border-radius: 8px;
+       padding: 7px 12px; font-size: 14px; cursor: pointer; }
+.btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+.btn.danger { color: var(--danger); }
+.group { margin: 16px 0 6px; font-weight: 600; color: var(--accent); font-size: 14px; }
+.card { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px;
+        margin-bottom: 8px; display: flex; gap: 10px; align-items: flex-start; cursor: pointer; }
+.card .lead { min-width: 48px; color: var(--muted); font-variant-numeric: tabular-nums; font-size: 14px; padding-top: 1px; }
+.card .main { flex: 1; min-width: 0; }
+.card .title { font-weight: 600; word-break: break-all; }
+.card .memo { color: var(--muted); font-size: 13px; white-space: pre-wrap; word-break: break-all; }
+.card a { color: var(--accent); font-size: 13px; }
+.card .amt { font-weight: 600; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.card.done .title { text-decoration: line-through; color: var(--muted); }
+.tag { display: inline-block; font-size: 12px; background: var(--accent-soft); color: var(--accent);
+       border-radius: 10px; padding: 0 8px; margin-right: 4px; }
+input[type=checkbox].chk { width: 20px; height: 20px; margin-top: 1px; accent-color: var(--accent); }
+.empty { text-align: center; color: var(--muted); padding: 30px 0; }
+.sum { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 12px; margin-bottom: 12px; }
+.sum table { width: 100%; border-collapse: collapse; font-size: 14px; }
+.sum td { padding: 4px 0; font-variant-numeric: tabular-nums; }
+.sum td:last-child { text-align: right; }
+.plus { color: var(--ok); } .minus { color: var(--danger); }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px; }
+.chip { border: 1px solid var(--line); background: var(--card); border-radius: 14px; padding: 3px 10px; font-size: 13px; cursor: pointer; }
+dialog { border: 0; border-radius: 12px; padding: 0; width: min(440px, calc(100vw - 32px));
+         background: var(--card); color: var(--text); }
+dialog::backdrop { background: rgba(0,0,0,.4); }
+dialog form { padding: 16px; }
+dialog h3 { margin: 0 0 12px; font-size: 17px; }
+label { display: block; font-size: 13px; color: var(--muted); margin: 8px 0 3px; }
+input, select, textarea { width: 100%; font: inherit; color: var(--text); background: var(--bg);
+       border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; }
+textarea { min-height: 64px; resize: vertical; }
+.row { display: flex; justify-content: space-between; gap: 8px; margin-top: 16px; }
+.row .right { display: flex; gap: 8px; }
+</style>
+</head>
+<body>
+<header>
+  <h1>🌊 거제 여행</h1>
+  <div class="sub" id="sub">일정 · 장소 · 준비물 · 경비</div>
+  <nav id="tabs">
+    <button data-tab="schedule" class="on">일정</button>
+    <button data-tab="place">장소</button>
+    <button data-tab="check">준비물</button>
+    <button data-tab="expense">경비</button>
+  </nav>
+</header>
+<main>
+  <div id="banner"></div>
+  <div id="view"></div>
+</main>
+
+<dialog id="dlg"><form method="dialog" id="dlgForm"></form></dialog>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+<script>
+// ─────────────────────────────────────────────────────────────
+// 설정 — Supabase 프로젝트의 URL 과 publishable(anon) key. 공개용 키라 페이지에 있어도 된다.
+// 비워 두면 데모 모드(이 브라우저에만 저장)로 동작한다.
+// secret(service_role) 키는 절대 넣지 않는다.
+// ─────────────────────────────────────────────────────────────
+const CONFIG = {
+  SUPABASE_URL: "https://yijkbqygdiscaunzhrvy.supabase.co",
+  SUPABASE_ANON_KEY: "sb_publishable_kymzTMwNQpia-oz05r63Qg_4AaR1NJo",
+};
+const TABLE = "trip_items";
+const PASS_KEY = "geoje-trip-pass";   // 브라우저에 기억하는 여행 암호
+const DEMO_KEY = "geoje-trip-demo";   // 데모 모드 저장소
+
+// ─────────────────────────────────────────────────────────────
+// 탭별 입력 항목 — 한 표(trip_items)에 kind 로 나눠 담는다
+// ─────────────────────────────────────────────────────────────
+const PLACE_CATS = ["관광", "맛집", "카페", "숙소", "기타"];
+const FORMS = {
+  schedule: { name: "일정", fields: [
+    { k: "day", label: "날짜", type: "date" },
+    { k: "time", label: "시간", type: "time" },
+    { k: "title", label: "내용", required: true },
+    { k: "memo", label: "메모", type: "textarea" },
+    { k: "url", label: "링크", type: "url" },
+  ]},
+  place: { name: "장소", fields: [
+    { k: "category", label: "분류", type: "select", options: PLACE_CATS },
+    { k: "title", label: "이름", required: true },
+    { k: "memo", label: "메모(주소 · 영업시간 등)", type: "textarea" },
+    { k: "url", label: "링크(비우면 지도 검색)", type: "url" },
+  ]},
+  check: { name: "준비물", fields: [
+    { k: "title", label: "준비물", required: true },
+    { k: "person", label: "담당" },
+    { k: "done", label: "챙김", type: "checkbox" },
+  ]},
+  expense: { name: "경비", fields: [
+    { k: "day", label: "날짜", type: "date" },
+    { k: "title", label: "내용", required: true },
+    { k: "amount", label: "금액(원)", type: "number", required: true },
+    { k: "person", label: "낸 사람", type: "member" },
+    { k: "memo", label: "메모", type: "textarea" },
+  ]},
+  member: { name: "인원", fields: [
+    { k: "title", label: "이름", required: true },
+  ]},
+};
+
+// ─────────────────────────────────────────────────────────────
+// 저장소 — Supabase 또는 데모(localStorage)
+// ─────────────────────────────────────────────────────────────
+const remote = Boolean(CONFIG.SUPABASE_URL && CONFIG.SUPABASE_ANON_KEY);
+let client = null;
+
+function lsGet(key) { try { return localStorage.getItem(key); } catch (e) { return null; } }
+function lsSet(key, v) { try { localStorage.setItem(key, v); } catch (e) {} }
+function lsDel(key) { try { localStorage.removeItem(key); } catch (e) {} }
+
+function connect(pass) {
+  // 여행 암호는 x-trip-key 헤더로 보내고, DB 의 RLS 정책이 이 값을 검사한다
+  client = supabase.createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_ANON_KEY, {
+    auth: { persistSession: false },
+    global: { headers: { "x-trip-key": pass } },
+  });
+}
+
+const store = {
+  async checkPass() {
+    const { data, error } = await client.rpc("trip_key_ok");
+    if (error) throw error;
+    return data === true;
+  },
+  async list() {
+    if (!remote) return JSON.parse(lsGet(DEMO_KEY) || "[]");
+    const { data, error } = await client.from(TABLE).select("*").order("created_at");
+    if (error) throw error;
+    return data;
+  },
+  async insert(row) {
+    if (!remote) {
+      const all = await store.list();
+      all.push({ ...row, id: Date.now(), created_at: new Date().toISOString() });
+      lsSet(DEMO_KEY, JSON.stringify(all));
+      return;
+    }
+    const { error } = await client.from(TABLE).insert(row);
+    if (error) throw error;
+  },
+  async update(id, patch) {
+    if (!remote) {
+      const all = (await store.list()).map(r => r.id === id ? { ...r, ...patch } : r);
+      lsSet(DEMO_KEY, JSON.stringify(all));
+      return;
+    }
+    const { error } = await client.from(TABLE).update(patch).eq("id", id);
+    if (error) throw error;
+  },
+  async remove(id) {
+    if (!remote) {
+      lsSet(DEMO_KEY, JSON.stringify((await store.list()).filter(r => r.id !== id)));
+      return;
+    }
+    const { error } = await client.from(TABLE).delete().eq("id", id);
+    if (error) throw error;
+  },
+};
+
+// ─────────────────────────────────────────────────────────────
+// 화면 공통
+// ─────────────────────────────────────────────────────────────
+let items = [];
+let tab = lsGet("geoje-trip-tab") || "schedule";
+let placeFilter = "전체";
+
+const $ = sel => document.querySelector(sel);
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c =>
+  ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const won = n => (Number(n) || 0).toLocaleString("ko-KR") + "원";
+const WEEK = "일월화수목금토";
+
+function dayLabel(d) {
+  if (!d) return "날짜 미정";
+  const dt = new Date(d + "T00:00:00");
+  return `${dt.getMonth() + 1}/${dt.getDate()}(${WEEK[dt.getDay()]})`;
+}
+
+function showBanner(msg, isErr) {
+  $("#banner").innerHTML = msg ? `<div class="banner${isErr ? " err" : ""}">${msg}</div>` : "";
+}
+
+function fail(e) {
+  console.error(e);
+  showBanner("저장소 오류: " + esc(e.message || e) + " — 여행 암호나 네트워크를 확인하세요.", true);
+}
+
+async function reload() {
+  try {
+    items = await store.list();
+    if (remote) showBanner("");
+  } catch (e) { fail(e); }
+  render();
+}
+
+function byKind(kind) { return items.filter(r => r.kind === kind); }
+
+// 카드 한 장 — o 는 화면용 값(memo · link · linkText · right · tag), 원본 r 은 고치지 않는다
+function card(r, lead, o = {}) {
+  const memo = "memo" in o ? o.memo : r.memo;
+  return `<div class="card${r.done ? " done" : ""}" data-id="${esc(r.id)}">${lead}
+    <div class="main"><div class="title">${o.tag || ""}${esc(r.title)}</div>
+    ${memo ? `<div class="memo">${esc(memo)}</div>` : ""}
+    ${o.link ? `<a href="${esc(o.link)}" target="_blank" rel="noopener" data-stop>${esc(o.linkText || "링크")}</a>` : ""}
+    </div>${o.right || ""}</div>`;
+}
+
+function bar(title, kind, more) {
+  return `<div class="bar"><h2>${title}</h2><div>${more || ""}
+    <button class="btn primary" data-add="${kind}">+ 추가</button></div></div>`;
+}
+
+// ─────────────────────────────────────────────────────────────
+// 탭별 화면
+// ─────────────────────────────────────────────────────────────
+function renderSchedule() {
+  const rows = byKind("schedule").sort((a, b) =>
+    (a.day || "9999").localeCompare(b.day || "9999") || (a.time || "99").localeCompare(b.time || "99"));
+  let html = bar("일정", "schedule");
+  if (!rows.length) return html + `<div class="empty">아직 일정이 없습니다</div>`;
+  let cur = null;
+  for (const r of rows) {
+    if (r.day !== cur) { cur = r.day; html += `<div class="group">${dayLabel(cur)}</div>`; }
+    html += card(r, `<div class="lead">${esc((r.time || "").slice(0, 5)) || "—"}</div>`, { link: r.url });
+  }
+  return html;
+}
+
+function renderPlace() {
+  const all = byKind("place");
+  const rows = placeFilter === "전체" ? all : all.filter(r => r.category === placeFilter);
+  const chips = ["전체", ...PLACE_CATS].map(c =>
+    `<span class="chip" data-filter="${c}" style="${c === placeFilter ? "border-color:var(--accent);color:var(--accent)" : ""}">${c}</span>`).join("");
+  let html = bar("장소", "place") + `<div class="chips">${chips}</div>`;
+  if (!rows.length) return html + `<div class="empty">등록된 장소가 없습니다</div>`;
+  for (const r of rows) {
+    html += card(r, "", {
+      tag: r.category ? `<span class="tag">${esc(r.category)}</span>` : "",
+      link: r.url || "https://map.naver.com/p/search/" + encodeURIComponent("거제 " + r.title),
+      linkText: r.url ? "링크" : "지도에서 보기",
+    });
+  }
+  return html;
+}
+
+function renderCheck() {
+  const rows = byKind("check").sort((a, b) => (a.done ? 1 : 0) - (b.done ? 1 : 0));
+  const left = rows.filter(r => !r.done).length;
+  let html = bar(`준비물 <span style="font-weight:400;color:var(--muted);font-size:14px">남은 것 ${left} / ${rows.length}</span>`, "check");
+  if (!rows.length) return html + `<div class="empty">준비물을 추가해 보세요</div>`;
+  for (const r of rows) {
+    html += card(r, `<input type="checkbox" class="chk" data-toggle="${esc(r.id)}" ${r.done ? "checked" : ""}>`,
+      { memo: r.person ? "담당: " + r.person : "" });
+  }
+  return html;
+}
+
+function renderExpense() {
+  const members = byKind("member").map(m => m.title);
+  const rows = byKind("expense").sort((a, b) => (a.day || "").localeCompare(b.day || ""));
+  const total = rows.reduce((s, r) => s + (Number(r.amount) || 0), 0);
+
+  // 1/N 정산 — 각자 낸 돈 - 1인 몫
+  const share = members.length ? total / members.length : 0;
+  const paid = Object.fromEntries(members.map(m => [m, 0]));
+  for (const r of rows) if (r.person in paid) paid[r.person] += Number(r.amount) || 0;
+  const unassigned = rows.filter(r => !(r.person in paid)).reduce((s, r) => s + (Number(r.amount) || 0), 0);
+
+  let html = bar("경비", "expense", `<button class="btn" data-add="member">인원</button> `);
+  html += `<div class="sum"><table>
+    <tr><td><b>총액</b></td><td><b>${won(total)}</b></td></tr>
+    <tr><td>인원 ${members.length}명 · 1인</td><td>${members.length ? won(Math.round(share)) : "인원을 추가하세요"}</td></tr>`;
+  for (const m of members) {
+    const bal = Math.round(paid[m] - share);
+    html += `<tr><td>${esc(m)} <span style="color:var(--muted)">(${won(paid[m])} 냄)</span></td>
+      <td class="${bal >= 0 ? "plus" : "minus"}">${bal >= 0 ? "받을 돈 " + won(bal) : "보낼 돈 " + won(-bal)}</td></tr>`;
+  }
+  if (unassigned) html += `<tr><td colspan="2" style="color:var(--danger)">낸 사람 미지정 ${won(unassigned)} — 정산에서 빠짐</td></tr>`;
+  html += `</table></div>`;
+
+  if (members.length) {
+    html += `<div class="chips">${byKind("member").map(m =>
+      `<span class="chip" data-id="${esc(m.id)}">👤 ${esc(m.title)}</span>`).join("")}</div>`;
+  }
+  if (!rows.length) return html + `<div class="empty">지출을 기록해 보세요</div>`;
+  let cur;
+  for (const r of rows) {
+    if (r.day !== cur) { cur = r.day; html += `<div class="group">${dayLabel(cur)}</div>`; }
+    html += card(r, "", {
+      right: `<div class="amt">${won(r.amount)}</div>`,
+      memo: [r.person && "낸 사람: " + r.person, r.memo].filter(Boolean).join("\n"),
+    });
+  }
+  return html;
+}
+
+function render() {
+  document.querySelectorAll("#tabs button").forEach(b => b.classList.toggle("on", b.dataset.tab === tab));
+  const view = { schedule: renderSchedule, place: renderPlace, check: renderCheck, expense: renderExpense }[tab];
+  $("#view").innerHTML = view();
+}
+
+// ─────────────────────────────────────────────────────────────
+// 추가 · 수정 창
+// ─────────────────────────────────────────────────────────────
+function openForm(kind, row) {
+  const spec = FORMS[kind];
+  const v = k => row ? (row[k] ?? "") : "";
+  const members = byKind("member").map(m => m.title);
+  let html = `<h3>${spec.name} ${row ? "수정" : "추가"}</h3>`;
+  for (const f of spec.fields) {
+    const id = "f_" + f.k;
+    if (f.type === "checkbox") {
+      html += `<label><input type="checkbox" id="${id}" style="width:auto" ${v(f.k) ? "checked" : ""}> ${f.label}</label>`;
+    } else if (f.type === "select" || f.type === "member") {
+      const opts = f.type === "member" ? ["", ...members] : f.options;
+      html += `<label for="${id}">${f.label}</label><select id="${id}">${opts.map(o =>
+        `<option ${o === v(f.k) ? "selected" : ""} value="${esc(o)}">${esc(o || "선택 안 함")}</option>`).join("")}</select>`;
+    } else if (f.type === "textarea") {
+      html += `<label for="${id}">${f.label}</label><textarea id="${id}">${esc(v(f.k))}</textarea>`;
+    } else {
+      html += `<label for="${id}">${f.label}</label><input id="${id}" type="${f.type || "text"}"
+        ${f.required ? "required" : ""} value="${esc(v(f.k))}" ${f.type === "number" ? 'inputmode="numeric" min="0"' : ""}>`;
+    }
+  }
+  html += `<div class="row"><div>${row ? `<button type="button" class="btn danger" id="dlgDel">삭제</button>` : ""}</div>
+    <div class="right"><button type="button" class="btn" id="dlgCancel">취소</button>
+    <button class="btn primary" value="save">저장</button></div></div>`;
+
+  const form = $("#dlgForm");
+  form.innerHTML = html;
+  const dlg = $("#dlg");
+  $("#dlgCancel").onclick = () => dlg.close();
+  if (row) $("#dlgDel").onclick = async () => {
+    if (!confirm(`«${row.title}» 을(를) 지울까요?`)) return;
+    dlg.close();
+    try { await store.remove(row.id); } catch (e) { fail(e); }
+    reload();
+  };
+  form.onsubmit = async ev => {
+    ev.preventDefault();
+    const data = { kind };
+    for (const f of spec.fields) {
+      const el = $("#f_" + f.k);
+      if (f.type === "checkbox") data[f.k] = el.checked;
+      else if (f.type === "number") data[f.k] = el.value === "" ? null : Number(el.value);
+      else data[f.k] = el.value.trim() || null;
+    }
+    dlg.close();
+    try { row ? await store.update(row.id, data) : await store.insert(data); } catch (e) { fail(e); }
+    reload();
+  };
+  dlg.showModal();
+}
+
+// ─────────────────────────────────────────────────────────────
+// 이벤트
+// ─────────────────────────────────────────────────────────────
+$("#tabs").onclick = e => {
+  const b = e.target.closest("button[data-tab]");
+  if (!b) return;
+  tab = b.dataset.tab;
+  lsSet("geoje-trip-tab", tab);
+  render();
+};
+
+$("#view").onclick = async e => {
+  if (e.target.closest("[data-stop]")) return;
+  const add = e.target.closest("[data-add]");
+  if (add) return openForm(add.dataset.add);
+  const filter = e.target.closest("[data-filter]");
+  if (filter) { placeFilter = filter.dataset.filter; return render(); }
+  const tog = e.target.closest("[data-toggle]");
+  if (tog) {
+    const r = items.find(x => String(x.id) === tog.dataset.toggle);
+    try { await store.update(r.id, { done: tog.checked }); } catch (err) { fail(err); }
+    return reload();
+  }
+  const c = e.target.closest("[data-id]");
+  if (c) {
+    const r = items.find(x => String(x.id) === c.dataset.id);
+    if (r) openForm(r.kind, r);
+  }
+};
+
+// 다른 사람이 고친 내용은 창으로 돌아올 때 다시 읽는다
+document.addEventListener("visibilitychange", () => { if (!document.hidden) reload(); });
+
+// ─────────────────────────────────────────────────────────────
+// 시작 — 원격이면 여행 암호를 확인한다
+// ─────────────────────────────────────────────────────────────
+async function start() {
+  if (!remote) {
+    showBanner("데모 모드 — 이 브라우저에만 저장됩니다. Supabase 를 연결하면 같이 가는 사람과 함께 고칠 수 있습니다.");
+    return reload();
+  }
+  let pass = lsGet(PASS_KEY);
+  for (;;) {
+    if (!pass) pass = prompt("여행 암호를 입력하세요");
+    if (pass === null) { showBanner("여행 암호가 있어야 볼 수 있습니다. 새로고침해서 다시 입력하세요.", true); return; }
+    connect(pass);
+    try {
+      if (await store.checkPass()) { lsSet(PASS_KEY, pass); break; }
+      alert("암호가 맞지 않습니다");
+    } catch (e) { fail(e); return; }
+    lsDel(PASS_KEY);
+    pass = null;
+  }
+  $("#sub").innerHTML += ` · <a href="#" id="logout" style="color:#fff">암호 지우기</a>`;
+  $("#logout").onclick = ev => { ev.preventDefault(); lsDel(PASS_KEY); location.reload(); };
+  reload();
+}
+start();
+</script>
+</body>
+</html>
