@@ -168,10 +168,24 @@ main { max-width: 640px; margin: -26px auto 0; padding: 0 16px calc(120px + var(
 .opt { display: flex; gap: 12px; padding: 14px; border-radius: 18px; background: var(--surface-2); border: 2px solid transparent;
        cursor: pointer; transition: border-color .15s, background .15s; }
 .opt.on { border-color: var(--brand); background: var(--brand-soft); }
-.radio { width: 22px; height: 22px; border-radius: 50%; border: 2px solid var(--muted); opacity: .6; flex: none; margin-top: 2px;
-         display: grid; place-items: center; }
-.opt.on .radio { border-color: var(--brand); opacity: 1; }
-.opt.on .radio::after { content: ""; width: 11px; height: 11px; border-radius: 50%; background: var(--brand); }
+.opt-thumb { position: relative; flex: none; }
+.radio { position: absolute; left: -6px; top: -6px; width: 24px; height: 24px; border-radius: 50%; border: 2px solid #fff;
+         background: rgba(0, 0, 0, .28); box-shadow: 0 2px 6px rgba(0, 0, 0, .2); display: grid; place-items: center; }
+.opt.on .radio { background: var(--brand); }
+.opt.on .radio::after { content: "✓"; color: #fff; font-size: 13px; font-weight: 900; line-height: 1; }
+
+/* 대표 사진 */
+.ph { position: relative; overflow: hidden; flex: none; display: grid; place-items: center;
+      background: linear-gradient(135deg, var(--brand-soft), rgba(255, 107, 90, .14)); }
+.ph span { font-size: 28px; opacity: .75; }
+.ph img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.ph.big { height: 156px; border-radius: 14px; margin: -2px -2px 12px; }
+.ph.big span { font-size: 46px; }
+.ph.sq { width: 84px; height: 84px; border-radius: 16px; }
+.ph.mini { width: 22px; height: 22px; border-radius: 50%; }
+.ph.mini span { font-size: 11px; }
+.cand { display: inline-flex; align-items: center; gap: 6px; padding-left: 5px; }
+.pick-menu { font-size: 14px; font-weight: 600; margin-top: 4px; }
 .opt-main { flex: 1; min-width: 0; }
 .opt-t { font-weight: 800; font-size: 16px; display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
 .opt-s { font-size: 13px; color: var(--muted); margin-top: 2px; }
@@ -752,6 +766,12 @@ function mapLinks(o) {
     ${o.url ? `<a class="pill ghost" href="${esc(o.url)}" target="_blank" rel="noopener" data-stop>${ICON.link}${srcName(o.url)}</a>` : ""}`;
 }
 
+// 대표 사진 — 없거나 못 불러오면 아이콘 카드가 보인다(외부 사이트 사진은 리퍼러 없이 불러온다)
+function thumb(o, cls, ic) {
+  return `<div class="ph ${cls}"><span>${ic}</span>${o.photo_url
+    ? `<img src="${esc(o.photo_url)}" alt="" decoding="async" referrerpolicy="no-referrer" onerror="this.remove()">` : ""}</div>`;
+}
+
 function slotCard(s) {
   const opts = optionsOf(s.id), picked = chosenOf(s);
   const head = `<div class="slot-h"><span class="slot-ic">${slotIcon(s)}</span><span class="slot-t">${esc(s.title)}</span>
@@ -760,11 +780,13 @@ function slotCard(s) {
   if (s.fixed) {
     body = "";
   } else if (picked) {
-    body = `<div class="pick-card"><div class="pick-title">${esc(picked.title)}${badge(picked.badge)}</div>
-      <div class="pick-sub">${esc([picked.area, picked.menu].filter(Boolean).join(" · "))}</div>
+    body = `<div class="pick-card">${thumb(picked, "big", slotIcon(s))}
+      <div class="pick-title">${esc(picked.title)}${badge(picked.badge)}</div>
+      ${picked.area ? `<div class="pick-sub">📍 ${esc(picked.area)}</div>` : ""}
+      ${picked.menu ? `<div class="pick-menu">${esc(picked.menu)}</div>` : ""}
       <div class="place-act">${mapLinks(picked)}<span class="swap">바꾸기 ›</span></div></div>`;
   } else {
-    body = `<div class="cands">${opts.map(o => `<span class="cand">${esc(o.title)}${o.badge === "블루리본" ? " 💙" : o.badge === "주신 곳" ? " ⭐" : ""}</span>`).join("")}</div>
+    body = `<div class="cands">${opts.map(o => `<span class="cand">${thumb(o, "mini", slotIcon(s))}${esc(o.title)}${o.badge === "블루리본" ? " 💙" : o.badge === "주신 곳" ? " ⭐" : ""}</span>`).join("")}</div>
       <div class="slot-hint">눌러서 하나 골라 주세요 👆</div>`;
   }
   return `<div class="slot card press${s.fixed ? " fixed" : ""}${picked ? " done" : ""}" data-slot="${s.id}">${head}${body}
@@ -817,7 +839,7 @@ function openSlot(s) {
   const html = `<div class="handle"></div><h3>${slotIcon(s)} ${esc(s.title)} 고르기</h3>
     <p class="sheet-sub">${dayLabel(s.day)} ${esc((s.time || "").slice(0, 5))}${s.memo ? " · " + esc(s.memo) : ""}</p>
     <div class="opts">${opts.map(o => `<div class="opt${o.id === s.chosen_id ? " on" : ""}" data-opt="${o.id}">
-      <span class="radio"></span>
+      <div class="opt-thumb">${thumb(o, "sq", slotIcon(s))}<span class="radio"></span></div>
       <div class="opt-main">
         <div class="opt-t">${esc(o.title)}${badge(o.badge)}</div>
         ${o.area || o.menu ? `<div class="opt-s">${esc([o.area, o.menu].filter(Boolean).join(" · "))}</div>` : ""}
@@ -868,11 +890,12 @@ function openOptionForm(s) {
     <div class="two"><div class="field"><label for="o_area">지역</label><input id="o_area" placeholder="예) 장승포"></div>
       <div class="field"><label for="o_menu">대표 메뉴</label><input id="o_menu" placeholder="예) 해물뚝배기"></div></div>
     <div class="field"><label for="o_memo">메모</label><input id="o_memo" placeholder="영업시간 · 주차 · 웨이팅"></div>
-    <div class="field"><label for="o_url">링크</label><input id="o_url" type="url" placeholder="비우면 지도 검색으로 연결"></div>
+    <div class="field"><label for="o_url">링크</label><input id="o_url" type="url" placeholder="블로그 · 인스타 · 유튜브 (지도는 자동)"></div>
+    <div class="field"><label for="o_photo">대표 사진 링크 (선택)</label><input id="o_photo" type="url" placeholder="https://…jpg"></div>
     <div class="actions"><button type="button" class="btn soft" id="sCancel">취소</button><button class="btn primary">추가</button></div>`, async () => {
     const v = id => $(id).value.trim() || null;
     const row = { slot_id: s.id, title: v("#o_title"), area: v("#o_area"), menu: v("#o_menu"), memo: v("#o_memo"), url: v("#o_url"),
-                  sort: optionsOf(s.id).length };
+                  photo_url: v("#o_photo"), sort: optionsOf(s.id).length };
     closeSheet();
     try { await store.addOption(row); toast("후보를 추가했어요"); } catch (e) { fail(e); }
     await reload();

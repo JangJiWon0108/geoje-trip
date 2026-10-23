@@ -122,6 +122,8 @@ main { max-width: 960px; margin: -44px auto 0; padding: 0 14px calc(40px + var(-
                 background: var(--surface); box-shadow: var(--shadow); color: var(--text); font: inherit; font-size: 15px; outline: none; }
 .ptools input:focus { border-color: var(--brand); }
 .place { padding: 13px 16px; }
+.place::after { content: ""; display: block; clear: both; }
+.pthumb { float: right; width: 64px; height: 64px; border-radius: 14px; object-fit: cover; margin: 0 0 6px 10px; background: var(--surface-2); }
 .place + .place { border-top: 1px solid var(--line); }
 .place-t { font-weight: 800; display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
 .place-s { font-size: 13px; color: var(--muted); margin-top: 2px; }
@@ -503,6 +505,7 @@ function renderPlaces() {
   for (const p of rows) {
     const uses = usesOf(p.name);
     html += `<div class="place">
+      ${p.photo_url ? `<img class="pthumb" src="${esc(p.photo_url)}" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.remove()">` : ""}
       <div class="place-t">${CAT_IC[p.category] || "📍"} ${esc(p.name)}${pbadge(p.badge)}${p.source === "주신 곳" ? pbadge("⭐ 미리 찜", "mine") : p.source === "앱에서 추가" ? pbadge("앱에서 추가", "app") : ""}</div>
       ${p.area || p.menu ? `<div class="place-s">${esc([p.area, p.menu].filter(Boolean).join(" · "))}</div>` : ""}
       ${p.memo ? `<div class="place-m">${esc(p.memo)}</div>` : ""}
@@ -521,6 +524,7 @@ function placeForm() {
     <div class="two"><input name="area" placeholder="지역 (예: 장승포)"><input name="menu" placeholder="대표 메뉴"></div>
     <input name="memo" placeholder="메모 (영업시간 · 주차 · 웨이팅)">
     <input name="source_url" type="url" placeholder="출처 링크 (블로그 · 인스타 · 유튜브)" required>
+    <input name="photo_url" type="url" placeholder="대표 사진 링크 (선택)">
     <button class="abtn ok">추가</button>
     <p class="hint" style="margin:0">지도 링크는 이름으로 자동으로 붙어요</p></form>`;
 }
@@ -626,7 +630,7 @@ $("#view").addEventListener("submit", async e => {
     const f = Object.fromEntries(new FormData(form).entries());
     const name = f.name.trim();
     const row = { name, category: f.category, area: f.area.trim() || null, menu: f.menu.trim() || null, memo: f.memo.trim() || null,
-                  source: "관리자 추가", source_url: f.source_url.trim(),
+                  source: "관리자 추가", source_url: f.source_url.trim(), photo_url: f.photo_url.trim() || null,
                   map_url: "https://map.naver.com/p/search/" + encodeURIComponent("거제 " + name) };
     const { error } = await client.from("trip_places").insert(row);
     if (error) return toast(/duplicate|unique/.test(error.message) ? "이미 있는 장소예요" : "추가하지 못했어요 — " + error.message);

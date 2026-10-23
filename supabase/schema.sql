@@ -130,9 +130,12 @@ create table if not exists public.trip_options (
   memo        text,
   url         text,
   badge       text,                          -- 블루리본 · 주신 곳 · 제철 …
+  photo_url   text,                          -- 대표 사진(장소 전용 페이지의 og:image 등)
   sort        integer not null default 0,
   created_at  timestamptz not null default now()
 );
+
+alter table public.trip_options add column if not exists photo_url text;
 
 alter table public.trip_slots   enable row level security;
 alter table public.trip_options enable row level security;
@@ -161,9 +164,11 @@ create table if not exists public.trip_places (
   source      text not null default '웹 검색',      -- 주신 곳 · 웹 검색 · 앱에서 추가 · 관리자 추가
   source_url  text,
   map_url     text not null,
+  photo_url   text,
   created_at  timestamptz not null default now()
 );
 
+alter table public.trip_places add column if not exists photo_url text;
 alter table public.trip_places enable row level security;
 drop policy if exists trip_places_admin on public.trip_places;
 create policy trip_places_admin on public.trip_places for all to anon using (public.admin_ok()) with check (public.admin_ok());
@@ -175,11 +180,11 @@ language plpgsql security definer set search_path = public as $$
 declare k text;
 begin
   select kind into k from trip_slots where id = new.slot_id;
-  insert into trip_places (name, category, area, menu, memo, badge, source, source_url, map_url)
+  insert into trip_places (name, category, area, menu, memo, badge, source, source_url, map_url, photo_url)
   values (new.title,
           case k when 'cafe' then '카페' when 'spot' then '구경' else '맛집' end,
           new.area, new.menu, new.memo, new.badge, '앱에서 추가', new.url,
-          'https://map.naver.com/p/search/' || replace('거제 ' || new.title, ' ', '%20'))
+          'https://map.naver.com/p/search/' || replace('거제 ' || new.title, ' ', '%20'), new.photo_url)
   on conflict (name) do nothing;
   return new;
 end $$;
