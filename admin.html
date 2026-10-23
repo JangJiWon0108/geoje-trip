@@ -274,7 +274,7 @@ function renderStats() {
   const newBugs = data.bugs.filter(b => b.status === "new").length;
   const cards = [
     ["👀", "오늘 접속", v.filter(r => isToday(r.created_at)).length, `전체 ${v.length}`],
-    ["🙋", "들어온 사람", people.size, "이름 · 기기 기준"],
+    ["📱", "들어온 기기", people.size, "기기 기준"],
     ["✏️", "수정", data.audit.length, `오늘 ${data.audit.filter(r => isToday(r.created_at)).length}`],
     ["💖", "응원", data.cheerTotal.toLocaleString("ko-KR"), `오늘 ${data.cheers.filter(r => isToday(r.created_at)).length}`],
     ["🐞", "새 문의", newBugs, `전체 ${data.bugs.length}`, newBugs > 0],

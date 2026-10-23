@@ -326,7 +326,7 @@ img.who { display: block; object-fit: cover; background: var(--surface-2); }
 /* ─────────────────────────────────────────────────────────────
    응원하기 · 버그 신고
    ───────────────────────────────────────────────────────────── */
-.sync { border: 0; color: #fff; cursor: pointer; }
+.sync { border: 0; color: #fff; cursor: default; }
 .hero-actions { display: flex; gap: 8px; margin-top: 14px; position: relative; z-index: 1; flex-wrap: wrap; }
 .hero-btn { display: inline-flex; align-items: center; gap: 6px; padding: 8px 13px; border-radius: 99px; cursor: pointer;
             border: 1px solid rgba(255, 255, 255, .3); background: rgba(255, 255, 255, .16); color: #fff;
@@ -412,7 +412,6 @@ img.who { display: block; object-fit: cover; background: var(--surface-2); }
     <div class="badge-ico">🏝️</div>
     <div class="kicker">GEOJE ISLAND</div>
     <h2>거제 야호</h2>
-    <p>같이 가는 사람만 들어올 수 있어요</p>
     <div class="glass">
       <label class="pw">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><rect x="4.5" y="10.5" width="15" height="10" rx="3"/><path d="M8 10.5V8a4 4 0 0 1 8 0v2.5"/></svg>
@@ -448,7 +447,6 @@ const TABLE = "trip_items";
 const PASS_KEY = "geoje-trip-pass";   // 브라우저에 기억하는 여행 암호
 const DEMO_KEY = "geoje-trip-demo";   // 데모 모드 저장소
 const TAB_KEY = "geoje-trip-tab";
-const NAME_KEY = "geoje-trip-name";   // 내 이름 — 수정 내역 · 응원 · 문의에 남는다
 const DEVICE_KEY = "geoje-trip-device";
 
 // ─────────────────────────────────────────────────────────────
@@ -485,9 +483,7 @@ function lsGet(key) { try { return localStorage.getItem(key); } catch (e) { retu
 function lsSet(key, v) { try { localStorage.setItem(key, v); } catch (e) {} }
 function lsDel(key) { try { localStorage.removeItem(key); } catch (e) {} }
 
-// 내 이름 · 기기 ID — 이름은 한글이라 헤더에 base64(UTF-8) 로 싣는다
-const myName = () => lsGet(NAME_KEY) || "";
-const b64 = s => btoa(String.fromCharCode(...new TextEncoder().encode(s)));
+// 기기 ID — 사람은 구분하지 않고, 기록은 기기 단위로만 남긴다
 function deviceId() {
   let d = lsGet(DEVICE_KEY);
   if (!d) {
@@ -500,10 +496,9 @@ function deviceId() {
 let currentPass = null;
 function connect(pass) {
   // 여행 암호는 x-trip-key 헤더로 보내고, DB 의 RLS 정책이 이 값을 검사한다.
-  // x-trip-user · x-trip-device 는 DB 가 접속 로그 · 수정 내역 · 응원에 기본값으로 채운다
+  // x-trip-device 는 DB 가 접속 로그 · 수정 내역 · 응원에 기본값으로 채운다
   currentPass = pass;
   const headers = { "x-trip-key": pass, "x-trip-device": deviceId() };
-  if (myName()) headers["x-trip-user"] = b64(myName());
   client = supabase.createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_ANON_KEY, {
     auth: { persistSession: false },
     global: { headers },
@@ -737,7 +732,7 @@ function render() {
   document.querySelectorAll(".tab").forEach(b => b.classList.toggle("on", b.dataset.tab === tab));
   const sync = $("#sync");
   sync.classList.toggle("demo", !remote);
-  sync.querySelector("span").textContent = !remote ? "데모" : myName() ? `${myName()} · 함께 보는 중` : "함께 보는 중";
+  sync.querySelector("span").textContent = remote ? "함께 보는 중" : "데모";
   if (!loaded) { $("#view").innerHTML = `<div class="skeleton"></div><div class="skeleton"></div><div class="skeleton"></div>`; return; }
   renderHero();
   const view = { schedule: renderSchedule, place: renderPlace, check: renderCheck }[tab];
@@ -847,48 +842,12 @@ function openPanel(html, onSubmit, focusFirst) {
   if (focusFirst) setTimeout(() => sheet.querySelector("input:not([type=hidden]), textarea")?.focus(), 320);
 }
 
-let onSheetClosed = null;   // 이름 시트를 그냥 닫아도 접속 기록은 남긴다
 function closeSheet() {
   $("#sheet").classList.remove("open");
   $("#scrim").classList.remove("open");
   document.body.classList.remove("lock-scroll");
   document.activeElement?.blur?.();
-  const after = onSheetClosed;
-  onSheetClosed = null;
-  if (after) after();
 }
-
-// ─────────────────────────────────────────────────────────────
-// 이름 — 처음 들어올 때 · 상단 이름표를 누를 때
-// ─────────────────────────────────────────────────────────────
-function setName(name) {
-  if (name) lsSet(NAME_KEY, name); else lsDel(NAME_KEY);
-  if (currentPass) connect(currentPass);
-  render();
-}
-
-function openName(first) {
-  openPanel(`<div class="handle"></div><h3>${first ? "반가워요 👋" : "이름 바꾸기"}</h3>
-    <p class="sheet-sub">누가 고쳤는지 · 누가 응원했는지 남길 때 써요</p>
-    ${people.length ? `<div class="picks">${people.map(p =>
-      `<button type="button" class="pick${p.name === myName() ? " on" : ""}" data-pick="${esc(p.name)}">${who(p.name)}${esc(p.name)}</button>`).join("")}</div>` : ""}
-    <div class="field"><label for="f_name">${people.length ? "얼굴을 누르거나 직접 적어 주세요" : "이름"}</label>
-      <input id="f_name" maxlength="10" required value="${esc(myName())}" placeholder="예) 지원" autocomplete="nickname"></div>
-    <div class="actions">${first ? "" : `<button type="button" class="btn soft" id="sCancel">취소</button>`}
-      <button class="btn primary">${first ? "시작하기" : "저장"}</button></div>`, () => {
-    const name = $("#f_name").value.trim();
-    setName(name);
-    closeSheet();
-    if (name) toast(`${name} 님 반가워요 🙌`);
-  }, !people.length);
-  $("#sheet").querySelectorAll("[data-pick]").forEach(b => b.onclick = () => {
-    $("#sheet").querySelectorAll("[data-pick]").forEach(x => x.classList.toggle("on", x === b));
-    $("#f_name").value = b.dataset.pick;
-    vibrate();
-  });
-}
-
-$("#sync").onclick = () => { if (remote && client) openName(false); };
 
 // ─────────────────────────────────────────────────────────────
 // 폭죽 · 풍선 — 캔버스 조각 + 떠오르는 이모지
@@ -1017,7 +976,6 @@ $("#bugBtn").onclick = () => {
       <input type="hidden" id="f_cat" value="${esc(BUG_CATS[0])}"></div>
     <div class="field"><label for="f_content">자세히 알려 주세요</label>
       <textarea id="f_content" required placeholder="언제 · 어디서 · 무엇을 눌렀더니 …"></textarea></div>
-    <div class="from">보내는 사람 · <b>${esc(myName() || "익명")}</b></div>
     <div class="actions"><button type="button" class="btn soft" id="sCancel">취소</button>
       <button class="btn primary">🚀 보내기</button></div>`, async () => {
     const row = { category: $("#f_cat").value, content: $("#f_content").value.trim() };
@@ -1149,14 +1107,11 @@ $("#lockForm").onsubmit = async e => {
   input.select();
 };
 
-// 암호가 맞은 뒤 — 이름이 없으면 먼저 묻고, 접속 기록 · 응원 숫자를 불러온다
-async function afterAuth() {
-  const loading = reload();
+// 암호가 맞은 뒤 — 화면 · 응원 숫자를 불러오고 접속 기록을 남긴다(사람 구분 없이 기기 단위)
+function afterAuth() {
+  reload();
   loadCheer();
-  if (myName()) return logVisit();
-  onSheetClosed = logVisit;
-  await loading;                       // 얼굴로 고를 수 있게 사람 목록부터 읽는다
-  setTimeout(() => openName(true), 300);
+  logVisit();
 }
 
 async function start() {
