@@ -58,8 +58,8 @@ main { max-width: 960px; margin: -44px auto 0; padding: 0 14px calc(40px + var(-
 /* 탭 */
 .seg { display: flex; gap: 4px; background: var(--surface); padding: 5px; border-radius: 16px; box-shadow: var(--shadow);
        position: sticky; top: calc(var(--safe-t) + 8px); z-index: 5; margin-bottom: 14px; overflow-x: auto; }
-.seg button { flex: 1 1 auto; min-width: 0; border: 0; background: transparent; border-radius: 12px; padding: 10px 6px;
-              font-size: 13px; font-weight: 700; color: var(--muted); cursor: pointer; white-space: nowrap; }
+.seg button { flex: 1 1 auto; min-width: 0; border: 0; background: transparent; border-radius: 12px; padding: 10px 4px;
+              font-size: 12.5px; letter-spacing: -0.03em; font-weight: 700; color: var(--muted); cursor: pointer; white-space: nowrap; }
 .seg button.on { background: var(--text); color: var(--bg); }
 .seg .n { font-size: 11px; opacity: .65; margin-left: 3px; }
 
@@ -116,6 +116,33 @@ main { max-width: 960px; margin: -44px auto 0; padding: 0 14px calc(40px + var(-
 .abtn.del { color: var(--coral); }
 .new-dot { display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: var(--coral); margin-left: 6px; vertical-align: 2px; }
 
+/* 장소 DB */
+.ptools { display: flex; gap: 8px; margin: 0 2px 10px; flex-wrap: wrap; align-items: center; }
+.ptools input { flex: 1; min-width: 150px; height: 40px; padding: 0 12px; border-radius: 12px; border: 2px solid transparent;
+                background: var(--surface); box-shadow: var(--shadow); color: var(--text); font: inherit; font-size: 15px; outline: none; }
+.ptools input:focus { border-color: var(--brand); }
+.place { padding: 13px 16px; }
+.place + .place { border-top: 1px solid var(--line); }
+.place-t { font-weight: 800; display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+.place-s { font-size: 13px; color: var(--muted); margin-top: 2px; }
+.place-m { font-size: 13px; margin-top: 3px; }
+.links { display: flex; gap: 6px; margin-top: 8px; flex-wrap: wrap; align-items: center; }
+.lk { display: inline-flex; align-items: center; gap: 4px; font-size: 12px; font-weight: 800; padding: 5px 10px; border-radius: 99px;
+      text-decoration: none; background: var(--brand); color: #fff; }
+.lk.ghost { background: var(--surface-2); color: var(--text); }
+.uses { font-size: 12px; color: var(--muted); }
+.uses b { color: var(--ok); }
+.bdg { font-size: 11px; font-weight: 800; padding: 2px 7px; border-radius: 7px; white-space: nowrap; background: var(--surface-2); color: var(--muted); }
+.bdg.blue { background: rgba(37, 99, 235, .12); color: #2563eb; }
+.bdg.mine { background: rgba(234, 179, 8, .18); color: #b7791f; }
+.bdg.season { background: rgba(14, 165, 164, .14); color: #0e8f8f; }
+.bdg.app { background: rgba(124, 92, 255, .14); color: var(--violet); }
+.padd { padding: 14px 16px; display: grid; gap: 8px; }
+.padd .two { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.padd input, .padd select { height: 44px; padding: 0 12px; border-radius: 12px; border: 2px solid transparent; background: var(--surface-2);
+                            color: var(--text); font: inherit; font-size: 15px; outline: none; width: 100%; }
+.padd input:focus, .padd select:focus { border-color: var(--brand); }
+
 /* 설정 — 암호 */
 .set-body { padding: 4px 16px 16px; }
 .cur { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-bottom: 12px; }
@@ -171,6 +198,7 @@ main { max-width: 960px; margin: -44px auto 0; padding: 0 14px calc(40px + var(-
     <button data-tab="audit">수정 내역</button>
     <button data-tab="cheers">응원</button>
     <button data-tab="bugs">문의</button>
+    <button data-tab="places">장소</button>
     <button data-tab="settings">설정</button>
   </nav>
   <div id="view"></div>
@@ -286,7 +314,7 @@ function renderStats() {
   $("#stats").innerHTML = cards.map(([e, l, val, s, hot]) =>
     `<div class="stat${hot ? " hot" : ""}"><div class="l">${e} ${l}</div>
       <div class="v${/^[\d,]+$/.test(String(val)) ? "" : " txt"}">${esc(val)}</div><div class="s">${esc(s)}</div></div>`).join("");
-  const counts = { visits: v.length, audit: data.audit.length, cheers: data.cheerTotal, bugs: newBugs };
+  const counts = { visits: v.length, audit: data.audit.length, cheers: data.cheerTotal, bugs: newBugs, places: (data.places || []).length };
   document.querySelectorAll("#seg button").forEach(b => {
     b.classList.toggle("on", b.dataset.tab === tab);
     const n = counts[b.dataset.tab];
@@ -413,6 +441,91 @@ function renderBugs() {
 }
 
 // ─────────────────────────────────────────────────────────────
+// 장소 DB — 주신 곳 · 웹 검색 · 앱에서 추가한 곳. 지도 링크는 늘, 출처 링크는 있으면
+// ─────────────────────────────────────────────────────────────
+let placeCat = "전체", placeSrc = "전체", placeQ = "";
+const CAT_IC = { 맛집: "🍽️", 카페: "☕", 구경: "📸" };
+
+function srcLabel(url) {
+  if (!url) return "";
+  if (/youtube|youtu\.be/.test(url)) return "▶ 유튜브";
+  if (/blog|brunch|keyzard|tistory|click1-tip/.test(url)) return "📝 블로그";
+  if (/siksinhot/.test(url)) return "식신";
+  if (/diningcode/.test(url)) return "다이닝코드";
+  if (/x\.com|threads|instagram/.test(url)) return "SNS";
+  if (/koreacharts|visitkorea/.test(url)) return "관광공사";
+  if (/fmkorea|clien|tripade/.test(url)) return "💬 커뮤니티";
+  return "🔗 출처";
+}
+
+function pbadge(b, cls) {
+  if (!b) return "";
+  const c = cls || (b === "블루리본" ? "blue" : b.includes("제철") ? "season" : "");
+  const label = b === "블루리본" ? "💙 블루리본" : b;
+  return `<span class="bdg ${c}">${esc(label)}</span>`;
+}
+
+// 이 장소가 어느 슬롯 후보인지 · 골랐는지
+function usesOf(name) {
+  const opts = (data.options || []).filter(o => o.title === name);
+  return opts.map(o => {
+    const s = (data.slots || []).find(x => x.id === o.slot_id);
+    if (!s) return "";
+    const d = new Date(s.day + "T00:00:00");
+    const label = `${d.getMonth() + 1}/${d.getDate()} ${s.title}`;
+    return s.chosen_id === o.id ? `<b>✓ ${esc(label)}</b>` : esc(label);
+  }).filter(Boolean);
+}
+
+function renderPlaces() {
+  const all = data.places || [];
+  const q = placeQ.toLowerCase();
+  const CAT_ORDER = ["맛집", "카페", "구경"], SRC_ORDER = ["주신 곳", "앱에서 추가", "관리자 추가", "웹 검색"];
+  const rank = p => [CAT_ORDER.indexOf(p.category), SRC_ORDER.indexOf(p.source), p.badge === "블루리본" ? 0 : 1];
+  const rows = all.filter(p => (placeCat === "전체" || p.category === placeCat)
+    && (placeSrc === "전체" || p.source === placeSrc)
+    && (!q || [p.name, p.area, p.menu, p.memo].join(" ").toLowerCase().includes(q)))
+    .sort((a, b) => {
+      const x = rank(a), y = rank(b);
+      return x[0] - y[0] || x[1] - y[1] || x[2] - y[2] || a.name.localeCompare(b.name, "ko");
+    });
+  const count = (k, v) => all.filter(p => p[k] === v).length;
+  const chip = (group, v, n) => `<button class="chip${(group === "cat" ? placeCat : placeSrc) === v ? " on" : ""}" data-p${group}="${v}">${v === "전체" ? "전체" : (CAT_IC[v] || "") + " " + v} ${n}</button>`;
+
+  let html = `<div class="filters">${["전체", "맛집", "카페", "구경"].map(c => chip("cat", c, c === "전체" ? all.length : count("category", c))).join("")}</div>
+    <div class="filters">${["전체", "주신 곳", "웹 검색", "앱에서 추가", "관리자 추가"].filter(s => s === "전체" || count("source", s))
+      .map(s => chip("src", s, s === "전체" ? all.length : count("source", s))).join("")}</div>
+    <div class="ptools"><input id="pq" placeholder="이름 · 지역 · 메뉴 검색" value="${esc(placeQ)}"><button class="abtn ok" id="padd">+ 장소 추가</button></div>
+    <div id="paddBox"></div>`;
+  if (!rows.length) return html + empty("🧭", "조건에 맞는 장소가 없어요");
+
+  html += `<div class="card">`;
+  for (const p of rows) {
+    const uses = usesOf(p.name);
+    html += `<div class="place">
+      <div class="place-t">${CAT_IC[p.category] || "📍"} ${esc(p.name)}${pbadge(p.badge)}${p.source === "주신 곳" ? pbadge("⭐ 미리 찜", "mine") : p.source === "앱에서 추가" ? pbadge("앱에서 추가", "app") : ""}</div>
+      ${p.area || p.menu ? `<div class="place-s">${esc([p.area, p.menu].filter(Boolean).join(" · "))}</div>` : ""}
+      ${p.memo ? `<div class="place-m">${esc(p.memo)}</div>` : ""}
+      <div class="links"><a class="lk" href="${esc(p.map_url)}" target="_blank" rel="noopener">📍 지도</a>
+        ${p.source_url ? `<a class="lk ghost" href="${esc(p.source_url)}" target="_blank" rel="noopener">${srcLabel(p.source_url)}</a>` : ""}
+        ${uses.length ? `<span class="uses">후보: ${uses.join(" · ")}</span>` : ""}
+        <button class="abtn del" style="margin-left:auto;padding:5px 10px" data-pdel="${p.id}">삭제</button></div>
+    </div>`;
+  }
+  return html + `</div>`;
+}
+
+function placeForm() {
+  return `<form class="card padd" id="pform">
+    <div class="two"><input name="name" placeholder="이름" required><select name="category"><option>맛집</option><option>카페</option><option>구경</option></select></div>
+    <div class="two"><input name="area" placeholder="지역 (예: 장승포)"><input name="menu" placeholder="대표 메뉴"></div>
+    <input name="memo" placeholder="메모 (영업시간 · 주차 · 웨이팅)">
+    <input name="source_url" type="url" placeholder="출처 링크 (블로그 · 인스타 · 유튜브)" required>
+    <button class="abtn ok">추가</button>
+    <p class="hint" style="margin:0">지도 링크는 이름으로 자동으로 붙어요</p></form>`;
+}
+
+// ─────────────────────────────────────────────────────────────
 // 설정 — 여행 암호 보기 · 복사 · 바꾸기, 관리자 암호 바꾸기
 // ─────────────────────────────────────────────────────────────
 const SITE = "https://jangjiwon0108.github.io/geoje-trip/";
@@ -455,7 +568,7 @@ async function copy(text) {
 function render() {
   renderStats();
   $("#view").innerHTML = { visits: renderVisits, audit: renderAudit, cheers: renderCheers, bugs: renderBugs,
-                           settings: renderSettings }[tab]();
+                           places: renderPlaces, settings: renderSettings }[tab]();
 }
 
 // ─────────────────────────────────────────────────────────────
@@ -475,10 +588,15 @@ async function load() {
       q("trip_visits"), q("trip_audit"), q("trip_cheers"), q("trip_bugs"), client.rpc("cheer_count"),
       client.from("trip_people").select("name,photo"), client.rpc("admin_settings"),
     ]);
-    const opts = await client.from("trip_options").select("id,title");
+    const [opts, slts, plcs] = await Promise.all([
+      client.from("trip_options").select("id,slot_id,title"),
+      client.from("trip_slots").select("id,day,time,title,chosen_id"),
+      client.from("trip_places").select("*").order("category").order("source").order("name"),
+    ]);
     optNames = Object.fromEntries((opts.data || []).map(o => [o.id, o.title]));
     photos = Object.fromEntries((ppl.data || []).filter(p => p.photo).map(p => [p.name, p.photo]));
-    data = { visits, audit, cheers, bugs, cheerTotal: Number(total.data || 0), settings: settings.data || {} };
+    data = { visits, audit, cheers, bugs, cheerTotal: Number(total.data || 0), settings: settings.data || {},
+             options: opts.data || [], slots: slts.data || [], places: plcs.data || [] };
     const p = n => String(n).padStart(2, "0"), d = new Date();
     $("#upd").textContent = `${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())} 기준`;
     render();
@@ -503,6 +621,18 @@ $("#seg").onclick = e => {
 $("#view").addEventListener("submit", async e => {
   e.preventDefault();
   const form = e.target, kind = form.dataset.kind;
+  if (form.id === "pform") {
+    // 장소 추가 — 지도 링크는 이름으로 만든다
+    const f = Object.fromEntries(new FormData(form).entries());
+    const name = f.name.trim();
+    const row = { name, category: f.category, area: f.area.trim() || null, menu: f.menu.trim() || null, memo: f.memo.trim() || null,
+                  source: "관리자 추가", source_url: f.source_url.trim(),
+                  map_url: "https://map.naver.com/p/search/" + encodeURIComponent("거제 " + name) };
+    const { error } = await client.from("trip_places").insert(row);
+    if (error) return toast(/duplicate|unique/.test(error.message) ? "이미 있는 장소예요" : "추가하지 못했어요 — " + error.message);
+    toast("장소를 추가했어요");
+    return load();
+  }
   const p = form.p.value.trim();
   if (kind === "admin" && p !== form.p2.value.trim()) return toast("두 번 적은 암호가 달라요");
   const what = kind === "trip" ? "여행 암호" : "관리자 암호";
@@ -514,7 +644,35 @@ $("#view").addEventListener("submit", async e => {
   load();
 });
 
+// 장소 검색 — 다시 그려도 입력 위치를 지킨다
+$("#view").addEventListener("input", e => {
+  if (e.target.id !== "pq") return;
+  placeQ = e.target.value;
+  const pos = e.target.selectionStart;
+  render();
+  const q = $("#pq");
+  q.focus(); q.setSelectionRange(pos, pos);
+});
+
 $("#view").onclick = async e => {
+  const pc = e.target.closest("[data-pcat]");
+  if (pc) { placeCat = pc.dataset.pcat; return render(); }
+  const ps = e.target.closest("[data-psrc]");
+  if (ps) { placeSrc = ps.dataset.psrc; return render(); }
+  if (e.target.closest("#padd")) {
+    const box = $("#paddBox");
+    box.innerHTML = box.innerHTML ? "" : placeForm();
+    return box.querySelector("input")?.focus();
+  }
+  const pd = e.target.closest("[data-pdel]");
+  if (pd) {
+    const p = data.places.find(x => String(x.id) === pd.dataset.pdel);
+    if (!confirm(`«${p.name}» 을(를) 장소 DB 에서 지울까요?\n(일정 탭의 후보는 그대로 남아요)`)) return;
+    const { error } = await client.from("trip_places").delete().eq("id", p.id);
+    if (error) return toast("지우지 못했어요 — " + error.message);
+    toast("지웠어요");
+    return load();
+  }
   const cp = e.target.closest("[data-copy]");
   if (cp) {
     const pass = (data.settings || {}).trip_pass || "";

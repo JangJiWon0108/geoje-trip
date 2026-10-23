@@ -736,9 +736,20 @@ function badge(b) {
   return `<span class="bdg ${cls}">${esc(label)}</span>`;
 }
 
+// 출처 링크 이름 — 어디서 찾은 곳인지 한눈에
+function srcName(url) {
+  if (/youtube|youtu\.be/.test(url)) return "유튜브";
+  if (/blog|brunch|keyzard|tistory|click1-tip/.test(url)) return "블로그";
+  if (/siksinhot/.test(url)) return "식신";
+  if (/diningcode/.test(url)) return "다이닝코드";
+  if (/x\.com|threads|instagram/.test(url)) return "SNS";
+  if (/koreacharts|visitkorea/.test(url)) return "관광공사";
+  return "후기";
+}
+
 function mapLinks(o) {
   return `<a class="pill" href="${esc(mapUrl(o.title))}" target="_blank" rel="noopener" data-stop>${ICON.map}지도</a>
-    ${o.url ? `<a class="pill ghost" href="${esc(o.url)}" target="_blank" rel="noopener" data-stop>${ICON.link}${/blog/.test(o.url) ? "블로그" : "링크"}</a>` : ""}`;
+    ${o.url ? `<a class="pill ghost" href="${esc(o.url)}" target="_blank" rel="noopener" data-stop>${ICON.link}${srcName(o.url)}</a>` : ""}`;
 }
 
 function slotCard(s) {

@@ -147,6 +147,48 @@ create policy trip_options_admin on public.trip_options for select to anon using
 grant select, insert, update, delete on public.trip_slots, public.trip_options to anon;
 
 -- ─────────────────────────────────────────────────────────────
+-- 장소 DB — 주신 곳 · 웹 검색 · 앱에서 추가한 후보를 모두 모은다(관리자 화면 «장소»)
+--   map_url 은 반드시 있다. source_url 은 찾은 출처(블로그 · 기사 · 유튜브 …)
+-- ─────────────────────────────────────────────────────────────
+create table if not exists public.trip_places (
+  id          bigint generated always as identity primary key,
+  name        text not null unique,
+  category    text not null check (category in ('맛집', '카페', '구경')),
+  area        text,
+  menu        text,
+  memo        text,
+  badge       text,
+  source      text not null default '웹 검색',      -- 주신 곳 · 웹 검색 · 앱에서 추가 · 관리자 추가
+  source_url  text,
+  map_url     text not null,
+  created_at  timestamptz not null default now()
+);
+
+alter table public.trip_places enable row level security;
+drop policy if exists trip_places_admin on public.trip_places;
+create policy trip_places_admin on public.trip_places for all to anon using (public.admin_ok()) with check (public.admin_ok());
+grant select, insert, update, delete on public.trip_places to anon;
+
+-- 앱에서 슬롯 후보를 추가하면 장소 DB 에도 넣는다(이미 있으면 그대로)
+create or replace function public.trip_places_from_option() returns trigger
+language plpgsql security definer set search_path = public as $$
+declare k text;
+begin
+  select kind into k from trip_slots where id = new.slot_id;
+  insert into trip_places (name, category, area, menu, memo, badge, source, source_url, map_url)
+  values (new.title,
+          case k when 'cafe' then '카페' when 'spot' then '구경' else '맛집' end,
+          new.area, new.menu, new.memo, new.badge, '앱에서 추가', new.url,
+          'https://map.naver.com/p/search/' || replace('거제 ' || new.title, ' ', '%20'))
+  on conflict (name) do nothing;
+  return new;
+end $$;
+
+drop trigger if exists trip_options_to_places on public.trip_options;
+create trigger trip_options_to_places after insert on public.trip_options
+  for each row execute function public.trip_places_from_option();
+
+-- ─────────────────────────────────────────────────────────────
 -- 기록용 표 — 누가 · 어느 기기 · 어느 IP 는 요청 헤더에서 기본값으로 채운다
 -- ─────────────────────────────────────────────────────────────
 create table if not exists public.trip_visits (          -- 접속 로그
