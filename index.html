@@ -237,19 +237,69 @@ main { max-width: 640px; margin: -26px auto 0; padding: 0 16px calc(120px + var(
 /* ─────────────────────────────────────────────────────────────
    잠금 화면 · 토스트
    ───────────────────────────────────────────────────────────── */
-.lock { position: fixed; inset: 0; z-index: 60; display: grid; place-items: center; padding: 24px; color: #fff;
-        background: linear-gradient(160deg, #0b6f8a 0%, #0e8f8f 50%, #32b99f 100%); }
+.lock { position: fixed; inset: 0; z-index: 60; display: grid; place-items: center; overflow: hidden; color: #fff;
+        padding: calc(24px + var(--safe-t)) 22px calc(24px + var(--safe-b)); background: #05313a;
+        transition: opacity .45s ease, transform .45s ease; }
 .lock[hidden] { display: none; }
-.lock-box { width: 100%; max-width: 340px; text-align: center; }
-.lock .em { font-size: 60px; }
-.lock h2 { margin: 10px 0 4px; font-size: 26px; font-weight: 800; }
-.lock p { margin: 0 0 22px; opacity: .85; font-size: 15px; }
-.lock input { width: 100%; font: inherit; font-size: 18px; text-align: center; letter-spacing: .1em; padding: 16px; border-radius: 18px;
-              border: 0; outline: none; background: rgba(255, 255, 255, .2); color: #fff; }
-.lock input::placeholder { color: rgba(255, 255, 255, .6); letter-spacing: 0; }
-.lock button { width: 100%; margin-top: 10px; border: 0; border-radius: 18px; padding: 16px; font-size: 17px; font-weight: 800;
-               background: #fff; color: #0b6f8a; cursor: pointer; }
-.lock .err { color: #ffe1dc; font-size: 14px; min-height: 20px; margin-top: 10px; }
+.lock.leave { opacity: 0; transform: scale(1.05); pointer-events: none; }
+
+/* 배경 — 천천히 떠다니는 빛 덩어리 + 물결 */
+.blob { position: absolute; border-radius: 50%; filter: blur(64px); will-change: transform; }
+.blob.b1 { width: 400px; height: 400px; background: #14b8a6; top: -140px; left: -120px; opacity: .8; animation: drift1 14s ease-in-out infinite alternate; }
+.blob.b2 { width: 340px; height: 340px; background: #38bdf8; top: 22%; right: -160px; opacity: .65; animation: drift2 17s ease-in-out infinite alternate; }
+.blob.b3 { width: 320px; height: 320px; background: #fb7185; bottom: -100px; left: 6%; opacity: .42; animation: drift3 19s ease-in-out infinite alternate; }
+@keyframes drift1 { to { transform: translate(90px, 130px) scale(1.15); } }
+@keyframes drift2 { to { transform: translate(-100px, 90px) scale(.88); } }
+@keyframes drift3 { to { transform: translate(100px, -80px) scale(1.2); } }
+.waves { position: absolute; left: 0; right: 0; bottom: 0; height: 130px; pointer-events: none; }
+.waves svg { position: absolute; left: 0; bottom: 0; width: 200%; height: 100%; }
+.waves .w1 { opacity: .16; animation: wave 14s linear infinite; }
+.waves .w2 { opacity: .10; height: 80%; animation: wave 9s linear infinite reverse; }
+@keyframes wave { to { transform: translateX(-50%); } }
+
+/* 가운데 */
+.lock-box { position: relative; width: 100%; max-width: 360px; text-align: center; }
+.badge-ico { width: 108px; height: 108px; margin: 0 auto 20px; border-radius: 36px; display: grid; place-items: center; font-size: 58px;
+             background: linear-gradient(145deg, rgba(255, 255, 255, .30), rgba(255, 255, 255, .06));
+             border: 1px solid rgba(255, 255, 255, .32); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+             box-shadow: 0 22px 50px rgba(0, 0, 0, .28), inset 0 1px 0 rgba(255, 255, 255, .45);
+             animation: bob 4.5s ease-in-out infinite; }
+@keyframes bob { 50% { transform: translateY(-9px) rotate(-3deg); } }
+.kicker { font-size: 12px; font-weight: 700; letter-spacing: .3em; opacity: .7; }
+.lock h2 { margin: 6px 0 8px; font-size: 40px; font-weight: 800; letter-spacing: -0.045em; line-height: 1.1;
+           background: linear-gradient(180deg, #ffffff 30%, #bff7ea 100%); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.lock p { margin: 0 0 28px; opacity: .78; font-size: 15px; }
+
+/* 유리 카드 — 암호 입력 + 들어가기 */
+.glass { padding: 8px; border-radius: 28px; background: rgba(255, 255, 255, .12); border: 1px solid rgba(255, 255, 255, .22);
+         backdrop-filter: blur(22px) saturate(160%); -webkit-backdrop-filter: blur(22px) saturate(160%);
+         box-shadow: 0 26px 60px rgba(0, 0, 0, .28); }
+.pw { display: flex; align-items: center; gap: 10px; height: 60px; padding: 0 6px 0 18px; border-radius: 21px;
+      background: rgba(0, 0, 0, .20); transition: box-shadow .2s, background .2s; cursor: text; }
+.pw:focus-within { background: rgba(0, 0, 0, .28); box-shadow: 0 0 0 2px rgba(255, 255, 255, .6); }
+.pw > svg { flex: none; opacity: .75; }
+.pw input { flex: 1; min-width: 0; border: 0; outline: none; background: transparent; color: #fff;
+            font: inherit; font-size: 17px; font-weight: 600; letter-spacing: .08em; }
+.pw input::placeholder { color: rgba(255, 255, 255, .55); font-weight: 500; letter-spacing: 0; }
+.eye { width: 46px; height: 46px; flex: none; border: 0; background: transparent; color: #fff; opacity: .75;
+       border-radius: 14px; display: grid; place-items: center; cursor: pointer; }
+.eye:active { background: rgba(255, 255, 255, .12); }
+.eye .off { display: none; }
+.eye.on .on { display: none; } .eye.on .off { display: block; }
+.go { width: 100%; height: 60px; margin-top: 8px; border: 0; border-radius: 21px; cursor: pointer;
+      background: #fff; color: #075e6b; font-size: 17px; font-weight: 800;
+      display: flex; align-items: center; justify-content: center; gap: 8px;
+      box-shadow: 0 10px 24px rgba(0, 0, 0, .18); transition: transform .12s ease; }
+.go:active { transform: scale(.98); }
+.go.loading { pointer-events: none; }
+.go.loading > * { display: none; }
+.go.loading::after { content: ""; width: 22px; height: 22px; border-radius: 50%;
+                     border: 3px solid rgba(7, 94, 107, .2); border-top-color: #075e6b; animation: spin .7s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.lock .err { display: inline-block; margin-top: 16px; font-size: 14px; font-weight: 600; }
+.lock .err:not(:empty) { padding: 8px 16px; border-radius: 99px; background: rgba(255, 92, 80, .22); border: 1px solid rgba(255, 150, 140, .45); }
+.lock .foot { margin-top: 18px; font-size: 12px; opacity: .5; }
+@media (prefers-reduced-motion: reduce) { .blob, .waves svg, .badge-ico { animation: none; } }
 .shake { animation: shake .4s; }
 @keyframes shake { 20%, 60% { transform: translateX(-8px); } 40%, 80% { transform: translateX(8px); } }
 .toast { position: fixed; left: 50%; bottom: calc(100px + var(--safe-b)); z-index: 70; transform: translate(-50%, 20px);
@@ -296,13 +346,31 @@ main { max-width: 640px; margin: -26px auto 0; padding: 0 16px calc(120px + var(
 <form class="sheet" id="sheet" autocomplete="off"></form>
 
 <div class="lock" id="lock" hidden>
+  <div class="blob b1"></div><div class="blob b2"></div><div class="blob b3"></div>
+  <div class="waves">
+    <svg class="w1" viewBox="0 0 2880 130" preserveAspectRatio="none"><path fill="#fff" d="M0 60 Q180 20 360 60 T720 60 T1080 60 T1440 60 T1800 60 T2160 60 T2520 60 T2880 60 V130 H0Z"/></svg>
+    <svg class="w2" viewBox="0 0 2880 130" preserveAspectRatio="none"><path fill="#fff" d="M0 70 Q180 110 360 70 T720 70 T1080 70 T1440 70 T1800 70 T2160 70 T2520 70 T2880 70 V130 H0Z"/></svg>
+  </div>
   <form class="lock-box" id="lockForm">
-    <div class="em">🏝️</div>
+    <div class="badge-ico">🏝️</div>
+    <div class="kicker">GEOJE ISLAND</div>
     <h2>거제 여행</h2>
-    <p>같이 가는 사람만 볼 수 있어요.<br>여행 암호를 입력해 주세요.</p>
-    <input id="lockInput" type="password" placeholder="여행 암호" autocomplete="current-password">
-    <button>들어가기</button>
+    <p>같이 가는 사람만 들어올 수 있어요</p>
+    <div class="glass">
+      <label class="pw">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><rect x="4.5" y="10.5" width="15" height="10" rx="3"/><path d="M8 10.5V8a4 4 0 0 1 8 0v2.5"/></svg>
+        <input id="lockInput" type="password" placeholder="여행 암호" autocomplete="current-password" enterkeyhint="go" autocapitalize="off" spellcheck="false">
+        <button type="button" class="eye" id="eye" aria-label="암호 보기">
+          <svg class="on" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>
+          <svg class="off" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3l18 18M10.6 5.1A10 10 0 0 1 12 5c6.4 0 10 7 10 7a17 17 0 0 1-3.2 4M6.6 6.6A17 17 0 0 0 2 12s3.6 7 10 7a9.7 9.7 0 0 0 5.4-1.6M9.9 9.9a3 3 0 0 0 4.2 4.2"/></svg>
+        </button>
+      </label>
+      <button class="go" id="goBtn"><span>들어가기</span>
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+      </button>
+    </div>
     <div class="err" id="lockErr"></div>
+    <div class="foot">한 번 들어오면 이 기기에서는 다시 묻지 않아요</div>
   </form>
 </div>
 
@@ -753,22 +821,41 @@ function showLock(msg) {
   setTimeout(() => $("#lockInput").focus(), 100);
 }
 
+// 암호 보기 / 숨기기
+$("#eye").onclick = () => {
+  const input = $("#lockInput");
+  const show = input.type === "password";
+  input.type = show ? "text" : "password";
+  $("#eye").classList.toggle("on", show);
+  input.focus();
+};
+
 $("#lockForm").onsubmit = async e => {
   e.preventDefault();
-  const pass = $("#lockInput").value.trim();
-  if (!pass) return;
+  const input = $("#lockInput"), go = $("#goBtn");
+  const pass = input.value.trim();
+  if (!pass) return input.focus();
+  $("#lockErr").textContent = "";
+  go.classList.add("loading");
   try {
     if (await tryPass(pass)) {
+      // 맞으면 잠금 화면을 부드럽게 걷어내고 본 화면을 읽는다
       lsSet(PASS_KEY, pass);
-      $("#lock").hidden = true;
+      input.blur();
+      const lock = $("#lock");
+      lock.classList.add("leave");
+      setTimeout(() => { lock.hidden = true; lock.classList.remove("leave"); go.classList.remove("loading"); }, 450);
       return reload();
     }
     $("#lockErr").textContent = "암호가 맞지 않아요";
   } catch (err) {
-    $("#lockErr").textContent = "연결하지 못했어요 — 잠시 뒤 다시 해 주세요";
+    $("#lockErr").textContent = "연결하지 못했어요 · 잠시 뒤 다시 해 주세요";
   }
-  const box = $("#lockForm");
+  go.classList.remove("loading");
+  vibrate();
+  const box = $(".glass");
   box.classList.remove("shake"); void box.offsetWidth; box.classList.add("shake");
+  input.select();
 };
 
 async function start() {
