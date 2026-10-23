@@ -695,7 +695,7 @@ const esc = s => String(s ?? "").replace(/[&<>"']/g, c =>
 const WEEK = "일월화수목금토";
 const byKind = kind => items.filter(r => r.kind === kind);
 // 지도 검색 — 기본은 «거제 + 이름», 지역이 통영이면 «통영 + 이름»
-const mapUrl = (name, area) => "https://map.naver.com/p/search/" + encodeURIComponent(((area || "").includes("통영") ? "통영 " : "거제 ") + name);
+const mapUrl = (name, area) => "https://m.map.naver.com/search?query=" + encodeURIComponent(((area || "").includes("통영") ? "통영 " : "거제 ") + name);
 const vibrate = () => { try { navigator.vibrate && navigator.vibrate(8); } catch (e) {} };
 
 function dayLabel(d) {

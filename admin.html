@@ -632,7 +632,7 @@ $("#view").addEventListener("submit", async e => {
     const name = f.name.trim();
     const row = { name, category: f.category, area: f.area.trim() || null, menu: f.menu.trim() || null, memo: f.memo.trim() || null,
                   source: "관리자 추가", source_url: f.source_url.trim(), photo_url: f.photo_url.trim() || null,
-                  map_url: "https://map.naver.com/p/search/" + encodeURIComponent("거제 " + name) };
+                  map_url: "https://m.map.naver.com/search?query=" + encodeURIComponent("거제 " + name) };
     const { error } = await client.from("trip_places").insert(row);
     if (error) return toast(/duplicate|unique/.test(error.message) ? "이미 있는 장소예요" : "추가하지 못했어요 — " + error.message);
     toast("장소를 추가했어요");
