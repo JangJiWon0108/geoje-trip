@@ -450,6 +450,7 @@ const CAT_IC = { 맛집: "🍽️", 카페: "☕", 구경: "📸" };
 
 function srcLabel(url) {
   if (!url) return "";
+  if (/map\.kakao|kko\.to/.test(url)) return "🗺️ 카카오맵";
   if (/youtube|youtu\.be/.test(url)) return "▶ 유튜브";
   if (/blog|brunch|keyzard|tistory|click1-tip/.test(url)) return "📝 블로그";
   if (/siksinhot/.test(url)) return "식신";

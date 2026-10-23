@@ -752,6 +752,7 @@ function badge(b) {
 
 // 출처 링크 이름 — 어디서 찾은 곳인지 한눈에
 function srcName(url) {
+  if (/map\.kakao|kko\.to/.test(url)) return "카카오맵";
   if (/youtube|youtu\.be/.test(url)) return "유튜브";
   if (/blog|brunch|keyzard|tistory|click1-tip/.test(url)) return "블로그";
   if (/siksinhot/.test(url)) return "식신";
