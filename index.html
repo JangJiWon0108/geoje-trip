@@ -411,13 +411,9 @@ img.who { display: block; object-fit: cover; background: var(--surface-2); }
   <form class="lock-box" id="lockForm">
     <div class="badge-ico">🏝️</div>
     <div class="kicker">GEOJE ISLAND</div>
-    <h2>거제 여행</h2>
+    <h2>거제 야호</h2>
     <p>같이 가는 사람만 들어올 수 있어요</p>
     <div class="glass">
-      <label class="pw" style="margin-bottom:8px">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="8" r="4"/><path d="M4.5 20.5a7.5 7.5 0 0 1 15 0"/></svg>
-        <input id="lockName" placeholder="내 이름 (예: 지원)" maxlength="10" autocomplete="nickname" enterkeyhint="next" spellcheck="false">
-      </label>
       <label class="pw">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><rect x="4.5" y="10.5" width="15" height="10" rx="3"/><path d="M8 10.5V8a4 4 0 0 1 8 0v2.5"/></svg>
         <input id="lockInput" type="password" placeholder="여행 암호" autocomplete="current-password" enterkeyhint="go" autocapitalize="off" spellcheck="false">
@@ -1113,7 +1109,7 @@ function showLock(msg) {
   const lock = $("#lock");
   lock.hidden = false;
   $("#lockErr").textContent = msg || "";
-  setTimeout(() => (myName() ? $("#lockInput") : $("#lockName")).focus(), 100);
+  setTimeout(() => $("#lockInput").focus(), 100);
 }
 
 // 암호 보기 / 숨기기
@@ -1129,12 +1125,10 @@ $("#lockForm").onsubmit = async e => {
   e.preventDefault();
   const input = $("#lockInput"), go = $("#goBtn");
   const pass = input.value.trim();
-  const name = $("#lockName").value.trim();
   if (!pass) return input.focus();
   $("#lockErr").textContent = "";
   go.classList.add("loading");
   try {
-    if (name) lsSet(NAME_KEY, name);
     if (await tryPass(pass)) {
       // 맞으면 잠금 화면을 부드럽게 걷어내고 본 화면을 읽는다
       lsSet(PASS_KEY, pass);
@@ -1168,7 +1162,6 @@ async function afterAuth() {
 async function start() {
   render();
   if (!remote) return reload();
-  $("#lockName").value = myName();
   const saved = lsGet(PASS_KEY);
   if (!saved) return showLock();
   try {
