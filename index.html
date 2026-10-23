@@ -854,7 +854,7 @@ function renderSchedule() {
     const r = row.r;
     html += `<div class="tl fade-in">
       <div class="tl-time">${time}</div><div class="tl-rail"></div>
-      <div class="tl-card card press" data-id="${esc(r.id)}"><b>${esc(r.title)}</b>
+      <div class="tl-card card press" data-id="${esc(r.id)}">${r.photo_url ? thumb(r, "big", "🏠") : ""}<b>${esc(r.title)}</b>
         ${r.memo ? `<p>${esc(r.memo)}</p>` : ""}
         ${r.url ? `<div class="place-act"><a class="pill ghost" href="${esc(r.url)}" target="_blank" rel="noopener" data-stop>${ICON.link}링크</a></div>` : ""}
       </div></div>`;

@@ -75,6 +75,9 @@ create table if not exists public.trip_items (
   done        boolean not null default false,
   created_at  timestamptz not null default now()
 );
+-- 동선 지도 좌표(기차역 · 숙소)와 일정 카드 대표 사진(숙소 등)
+alter table public.trip_items add column if not exists geo jsonb;
+alter table public.trip_items add column if not exists photo_url text;
 
 alter table public.trip_items enable row level security;
 drop policy if exists trip_items_pass on public.trip_items;
