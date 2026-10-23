@@ -133,8 +133,53 @@ main { max-width: 640px; margin: -26px auto 0; padding: 0 16px calc(120px + var(
 .tl-rail::before { content: ""; position: absolute; left: 8px; top: 0; bottom: 0; width: 2px; background: var(--line); }
 .tl:first-of-type .tl-rail::before { top: 20px; }
 .tl-rail::after { content: ""; position: absolute; left: 3px; top: 18px; width: 12px; height: 12px; border-radius: 50%;
-                  background: var(--surface); border: 3px solid var(--brand); }
+                  background: var(--surface); border: 3px solid var(--dot, var(--brand)); }
 .tl-card { margin: 0 0 10px 6px; padding: 13px 16px; cursor: pointer; }
+
+/* 끼니 · 카페 슬롯 */
+.plan-bar { display: flex; align-items: center; gap: 12px; padding: 12px 16px; margin-bottom: 6px; font-size: 13px; font-weight: 700; color: var(--muted); }
+.plan-bar .bar { flex: 1; margin: 0; height: 8px; }
+.slot { margin: 0 0 12px 6px; padding: 14px 16px; cursor: pointer; }
+.slot-h { display: flex; align-items: center; gap: 9px; }
+.slot-ic { width: 34px; height: 34px; border-radius: 12px; display: grid; place-items: center; font-size: 18px; flex: none; background: var(--surface-2); }
+.slot-t { font-weight: 800; font-size: 16px; }
+.slot-st { margin-left: auto; font-size: 12px; font-weight: 800; color: var(--muted); background: var(--surface-2);
+           padding: 4px 10px; border-radius: 99px; white-space: nowrap; }
+.slot-st.ok { color: #fff; background: var(--ok); }
+.cands { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 11px; }
+.cand { font-size: 13px; font-weight: 600; padding: 6px 10px; border-radius: 10px; background: var(--surface-2); }
+.slot-hint { font-size: 12px; color: var(--brand); font-weight: 700; margin-top: 9px; }
+.pick-card { margin-top: 11px; padding: 12px 14px; border-radius: 16px; background: var(--brand-soft); }
+.pick-title { font-weight: 800; font-size: 17px; display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.pick-sub { font-size: 13px; color: var(--muted); margin-top: 2px; }
+.pick-card .place-act { align-items: center; }
+.swap { margin-left: auto; font-size: 12px; font-weight: 700; color: var(--muted); }
+.slot-memo { font-size: 12px; color: var(--muted); margin-top: 9px; }
+.slot.fixed { background: linear-gradient(135deg, #ff9a3c 0%, #ff5f6d 100%); color: #fff; box-shadow: 0 10px 26px rgba(255, 95, 109, .3); }
+.slot.fixed .slot-ic { background: rgba(255, 255, 255, .22); }
+.slot.fixed .slot-st { background: rgba(255, 255, 255, .25); color: #fff; }
+.slot.fixed .slot-memo { color: #fff; opacity: .92; font-size: 14px; font-weight: 600; }
+.bdg { font-size: 11px; font-weight: 800; padding: 2px 7px; border-radius: 7px; white-space: nowrap;
+       background: var(--surface-2); color: var(--muted); }
+.bdg.blue { background: rgba(37, 99, 235, .12); color: #2563eb; }
+.bdg.mine { background: rgba(234, 179, 8, .18); color: #b7791f; }
+.bdg.season { background: rgba(14, 165, 164, .14); color: #0e8f8f; }
+.opts { display: grid; gap: 10px; margin-bottom: 12px; }
+.opt { display: flex; gap: 12px; padding: 14px; border-radius: 18px; background: var(--surface-2); border: 2px solid transparent;
+       cursor: pointer; transition: border-color .15s, background .15s; }
+.opt.on { border-color: var(--brand); background: var(--brand-soft); }
+.radio { width: 22px; height: 22px; border-radius: 50%; border: 2px solid var(--muted); opacity: .6; flex: none; margin-top: 2px;
+         display: grid; place-items: center; }
+.opt.on .radio { border-color: var(--brand); opacity: 1; }
+.opt.on .radio::after { content: ""; width: 11px; height: 11px; border-radius: 50%; background: var(--brand); }
+.opt-main { flex: 1; min-width: 0; }
+.opt-t { font-weight: 800; font-size: 16px; display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+.opt-s { font-size: 13px; color: var(--muted); margin-top: 2px; }
+.opt-m { font-size: 13px; margin-top: 4px; }
+.opt-act { display: flex; gap: 6px; margin-top: 9px; align-items: center; }
+.opt-act .icon-btn { margin-left: auto; width: 32px; height: 32px; }
+.add-opt { width: 100%; border: 2px dashed var(--line); background: transparent; border-radius: 16px; padding: 13px;
+           font-weight: 700; color: var(--brand); cursor: pointer; }
 .tl-card b { font-size: 16px; display: block; }
 .tl-card p { margin: 3px 0 0; color: var(--muted); font-size: 14px; white-space: pre-wrap; word-break: break-word; }
 
@@ -513,6 +558,31 @@ const store = {
     if (error) throw error;
     return data === true;
   },
+  async slots() {
+    if (!remote) return [];
+    const { data, error } = await client.from("trip_slots").select("*").order("day").order("time");
+    if (error) throw error;
+    return data;
+  },
+  async options() {
+    if (!remote) return [];
+    const { data, error } = await client.from("trip_options").select("*").order("sort").order("id");
+    if (error) throw error;
+    return data;
+  },
+  async setChosen(slotId, optionId) {
+    const { error } = await client.from("trip_slots").update({ chosen_id: optionId }).eq("id", slotId);
+    if (error) throw error;
+  },
+  async addOption(row) {
+    const { error } = await client.from("trip_options").insert(row);
+    if (error) throw error;
+  },
+  async removeOption(id) {
+    await client.from("trip_slots").update({ chosen_id: null }).eq("chosen_id", id);   // 고른 후보였으면 선택도 푼다
+    const { error } = await client.from("trip_options").delete().eq("id", id);
+    if (error) throw error;
+  },
   async people() {
     if (!remote) return [];
     const { data, error } = await client.from("trip_people").select("name,photo,sort").order("sort");
@@ -553,6 +623,7 @@ const store = {
 // 공통 도우미
 // ─────────────────────────────────────────────────────────────
 let items = [];
+let slots = [], options = [];   // 끼니 · 카페 슬롯과 후보
 let loaded = false;
 // 장소 탭은 잠시 숨김(사용자, 2026-10-23) — 데이터 · renderPlace 는 남겨 두어 다시 켜려면 여기와 탭바 버튼만 되살린다
 const TABS = ["schedule", "check"];
@@ -631,7 +702,9 @@ function renderHero() {
     const f = d => `${d.getMonth() + 1}.${d.getDate()}`;
     parts.push(days.length > 1 ? `${f(first)} – ${f(last)}` : f(first));
   }
-  parts.push(`일정 ${byKind("schedule").length} · 준비물 ${byKind("check").length}`);
+  const total = slots.filter(s => !s.fixed).length;
+  parts.push(total ? `${slots.filter(s => !s.fixed && s.chosen_id).length}/${total} 정함 · 준비물 ${byKind("check").length}`
+                   : `일정 ${byKind("schedule").length} · 준비물 ${byKind("check").length}`);
   $("#heroSub").innerHTML = parts.join("<span style='opacity:.5'>·</span>");
   $("#crew").innerHTML = people.length
     ? `<div class="crew-faces">${people.map(p => who(p.name)).join("")}</div>
@@ -642,29 +715,158 @@ function renderHero() {
 // ─────────────────────────────────────────────────────────────
 // 탭별 화면
 // ─────────────────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────
+// 끼니 · 카페 슬롯 — 후보 중 하나를 고른다
+// ─────────────────────────────────────────────────────────────
+const SLOT = {
+  meal: { ic: "🍽️", c: "#ff6b5a" },
+  cafe: { ic: "☕", c: "#b07848" },
+  bbq:  { ic: "🔥", c: "#ff7a1a" },
+  spot: { ic: "📸", c: "#0ea5a4" },
+};
+const slotIcon = s => s.title.includes("아침") ? "🍳" : (SLOT[s.kind] || SLOT.meal).ic;
+const optionsOf = id => options.filter(o => o.slot_id === id);
+const chosenOf = s => options.find(o => o.id === s.chosen_id);
+const choosable = () => slots.filter(s => !s.fixed);
+
+function badge(b) {
+  if (!b) return "";
+  const cls = b === "블루리본" ? "blue" : b === "주신 곳" ? "mine" : b.includes("제철") ? "season" : "";
+  const label = b === "블루리본" ? "💙 블루리본" : b === "주신 곳" ? "⭐ 미리 찜" : b.includes("제철") ? "🦪 " + b : b;
+  return `<span class="bdg ${cls}">${esc(label)}</span>`;
+}
+
+function mapLinks(o) {
+  return `<a class="pill" href="${esc(mapUrl(o.title))}" target="_blank" rel="noopener" data-stop>${ICON.map}지도</a>
+    ${o.url ? `<a class="pill ghost" href="${esc(o.url)}" target="_blank" rel="noopener" data-stop>${ICON.link}${/blog/.test(o.url) ? "블로그" : "링크"}</a>` : ""}`;
+}
+
+function slotCard(s) {
+  const opts = optionsOf(s.id), picked = chosenOf(s);
+  const head = `<div class="slot-h"><span class="slot-ic">${slotIcon(s)}</span><span class="slot-t">${esc(s.title)}</span>
+    <span class="slot-st${picked ? " ok" : ""}">${s.fixed ? "고정" : picked ? "✓ 정했어요" : `후보 ${opts.length}곳`}</span></div>`;
+  let body;
+  if (s.fixed) {
+    body = "";
+  } else if (picked) {
+    body = `<div class="pick-card"><div class="pick-title">${esc(picked.title)}${badge(picked.badge)}</div>
+      <div class="pick-sub">${esc([picked.area, picked.menu].filter(Boolean).join(" · "))}</div>
+      <div class="place-act">${mapLinks(picked)}<span class="swap">바꾸기 ›</span></div></div>`;
+  } else {
+    body = `<div class="cands">${opts.map(o => `<span class="cand">${esc(o.title)}${o.badge === "블루리본" ? " 💙" : o.badge === "주신 곳" ? " ⭐" : ""}</span>`).join("")}</div>
+      <div class="slot-hint">눌러서 하나 골라 주세요 👆</div>`;
+  }
+  return `<div class="slot card press${s.fixed ? " fixed" : ""}${picked ? " done" : ""}" data-slot="${s.id}">${head}${body}
+    ${s.memo ? `<div class="slot-memo">${esc(s.memo)}</div>` : ""}</div>`;
+}
+
 function renderSchedule() {
-  const rows = byKind("schedule").sort((a, b) =>
-    (a.day || "9999").localeCompare(b.day || "9999") || (a.time || "99").localeCompare(b.time || "99"));
-  let html = `<div class="sec-h"><h2>일정</h2><span class="meta">${rows.length}개</span></div>`;
+  // 일반 일정(기차 등)과 슬롯을 한 타임라인에 시간순으로
+  const rows = [
+    ...byKind("schedule").map(r => ({ type: "item", day: r.day, time: r.time, r })),
+    ...slots.map(s => ({ type: "slot", day: s.day, time: s.time, s })),
+  ].sort((a, b) => (a.day || "9999").localeCompare(b.day || "9999") || (a.time || "99").localeCompare(b.time || "99"));
+
+  const total = choosable().length, done = choosable().filter(s => s.chosen_id).length;
+  let html = `<div class="sec-h"><h2>일정</h2><span class="meta">${total ? `${done}/${total} 정함` : `${rows.length}개`}</span></div>`;
   if (!rows.length) return html + empty("🗓️", "아직 일정이 없어요", "아래 + 버튼으로 첫 일정을 넣어 보세요");
+  if (total) html += `<div class="plan-bar card"><div class="bar"><i style="width:${Math.round(done / total * 100)}%"></i></div>
+    <span>${done === total ? "다 정했어요 🎉" : `끼니 · 카페 ${total - done}곳 남았어요`}</span></div>`;
 
   const dayIndex = [...new Set(rows.map(r => r.day).filter(Boolean))];
   let cur = undefined;
-  for (const r of rows) {
-    if (r.day !== cur) {
+  for (const row of rows) {
+    if (row.day !== cur) {
       if (cur !== undefined) html += `</section>`;
-      cur = r.day;
+      cur = row.day;
       const n = cur ? `DAY ${dayIndex.indexOf(cur) + 1}` : "미정";
       html += `<section><div class="day-h"><span class="day-n">${n}</span><span class="d">${dayLabel(cur)}</span></div>`;
     }
+    const time = esc((row.time || "").slice(0, 5)) || "–";
+    if (row.type === "slot") {
+      const c = (SLOT[row.s.kind] || SLOT.meal).c;
+      html += `<div class="tl fade-in"><div class="tl-time">${time}</div><div class="tl-rail" style="--dot:${c}"></div>${slotCard(row.s)}</div>`;
+      continue;
+    }
+    const r = row.r;
     html += `<div class="tl fade-in">
-      <div class="tl-time">${esc((r.time || "").slice(0, 5)) || "–"}</div><div class="tl-rail"></div>
+      <div class="tl-time">${time}</div><div class="tl-rail"></div>
       <div class="tl-card card press" data-id="${esc(r.id)}"><b>${esc(r.title)}</b>
         ${r.memo ? `<p>${esc(r.memo)}</p>` : ""}
         ${r.url ? `<div class="place-act"><a class="pill ghost" href="${esc(r.url)}" target="_blank" rel="noopener" data-stop>${ICON.link}링크</a></div>` : ""}
       </div></div>`;
   }
   return html + `</section>`;
+}
+
+// 슬롯 시트 — 후보를 누르면 바로 정해진다
+function openSlot(s) {
+  if (s.fixed) return toast(`${slotIcon(s)} ${s.title}은 정해져 있어요`);
+  const opts = optionsOf(s.id);
+  const html = `<div class="handle"></div><h3>${slotIcon(s)} ${esc(s.title)} 고르기</h3>
+    <p class="sheet-sub">${dayLabel(s.day)} ${esc((s.time || "").slice(0, 5))}${s.memo ? " · " + esc(s.memo) : ""}</p>
+    <div class="opts">${opts.map(o => `<div class="opt${o.id === s.chosen_id ? " on" : ""}" data-opt="${o.id}">
+      <span class="radio"></span>
+      <div class="opt-main">
+        <div class="opt-t">${esc(o.title)}${badge(o.badge)}</div>
+        ${o.area || o.menu ? `<div class="opt-s">${esc([o.area, o.menu].filter(Boolean).join(" · "))}</div>` : ""}
+        ${o.memo ? `<div class="opt-m">${esc(o.memo)}</div>` : ""}
+        <div class="opt-act">${mapLinks(o)}<button type="button" class="icon-btn" data-optdel="${o.id}" aria-label="후보 빼기">✕</button></div>
+      </div></div>`).join("") || `<div class="empty">아직 후보가 없어요</div>`}</div>
+    <button type="button" class="add-opt" id="addOpt">+ 후보 추가</button>
+    <div class="actions">${s.chosen_id ? `<button type="button" class="btn soft" id="unpick">선택 취소</button>` : ""}
+      <button type="button" class="btn primary" id="sCancel">닫기</button></div>`;
+  openPanel(html, () => {}, false);
+
+  const sheet = $("#sheet");
+  sheet.onclick = async e => {
+    if (e.target.closest("[data-stop]")) return;
+    const del = e.target.closest("[data-optdel]");
+    if (del) {
+      const o = options.find(x => String(x.id) === del.dataset.optdel);
+      if (!confirm(`«${o.title}» 을(를) 후보에서 뺄까요?`)) return;
+      options = options.filter(x => x.id !== o.id);
+      if (s.chosen_id === o.id) s.chosen_id = null;
+      openSlot(s); render();
+      try { await store.removeOption(o.id); } catch (err) { fail(err); }
+      return reload();
+    }
+    const pick = e.target.closest("[data-opt]");
+    if (pick) {
+      const o = options.find(x => String(x.id) === pick.dataset.opt);
+      s.chosen_id = o.id;                       // 화면부터 바꾸고 저장한다
+      closeSheet(); render(); vibrate();
+      toast(`${slotIcon(s)} «${o.title}» 로 정했어요`);
+      fx.burst(innerWidth / 2, innerHeight * .45, 50);
+      try { await store.setChosen(s.id, o.id); } catch (err) { fail(err); }
+      return reload();
+    }
+    if (e.target.closest("#unpick")) {
+      s.chosen_id = null;
+      closeSheet(); render();
+      try { await store.setChosen(s.id, null); } catch (err) { fail(err); }
+      return reload();
+    }
+    if (e.target.closest("#addOpt")) openOptionForm(s);
+  };
+}
+
+function openOptionForm(s) {
+  openPanel(`<div class="handle"></div><h3>${slotIcon(s)} ${esc(s.title)} 후보 추가</h3>
+    <div class="field"><label for="o_title">이름</label><input id="o_title" required placeholder="예) 항만식당"></div>
+    <div class="two"><div class="field"><label for="o_area">지역</label><input id="o_area" placeholder="예) 장승포"></div>
+      <div class="field"><label for="o_menu">대표 메뉴</label><input id="o_menu" placeholder="예) 해물뚝배기"></div></div>
+    <div class="field"><label for="o_memo">메모</label><input id="o_memo" placeholder="영업시간 · 주차 · 웨이팅"></div>
+    <div class="field"><label for="o_url">링크</label><input id="o_url" type="url" placeholder="비우면 지도 검색으로 연결"></div>
+    <div class="actions"><button type="button" class="btn soft" id="sCancel">취소</button><button class="btn primary">추가</button></div>`, async () => {
+    const v = id => $(id).value.trim() || null;
+    const row = { slot_id: s.id, title: v("#o_title"), area: v("#o_area"), menu: v("#o_menu"), memo: v("#o_memo"), url: v("#o_url"),
+                  sort: optionsOf(s.id).length };
+    closeSheet();
+    try { await store.addOption(row); toast("후보를 추가했어요"); } catch (e) { fail(e); }
+    await reload();
+    openSlot(slots.find(x => x.id === s.id) || s);
+  }, true);
 }
 
 function renderPlace() {
@@ -741,7 +943,9 @@ function render() {
 
 async function reload() {
   try {
-    [items, people] = await Promise.all([store.list(), store.people().catch(() => people)]);
+    [items, people, slots, options] = await Promise.all([
+      store.list(), store.people().catch(() => people), store.slots().catch(() => slots), store.options().catch(() => options),
+    ]);
     errMsg = "";
   } catch (e) { fail(e); }
   loaded = true;
@@ -823,6 +1027,7 @@ function openSheet(kind, row) {
 // 시트 공통 — html 을 넣고 분류 버튼 · 취소 · 저장을 잇는다
 function openPanel(html, onSubmit, focusFirst) {
   const sheet = $("#sheet");
+  sheet.onclick = null;            // 앞 시트(슬롯 고르기)의 클릭 처리를 지운다
   sheet.innerHTML = html;
   sheet.querySelectorAll("[data-seg]").forEach(seg => seg.onclick = e => {
     const b = e.target.closest("button");
@@ -1046,6 +1251,8 @@ $("#view").onclick = async e => {
     try { await store.update(r.id, { done: r.done }); } catch (err) { fail(err); reload(); }
     return;
   }
+  const sl = e.target.closest("[data-slot]");
+  if (sl) { const s = slots.find(x => String(x.id) === sl.dataset.slot); if (s) openSlot(s); return; }
   const c = e.target.closest("[data-id]");
   if (c) { const r = find(c.dataset.id); if (r) openSheet(r.kind, r); }
 };

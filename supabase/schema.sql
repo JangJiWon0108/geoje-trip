@@ -106,6 +106,47 @@ create policy trip_people_admin on public.trip_people for select to anon using (
 grant select, insert, update, delete on public.trip_people to anon;
 
 -- ─────────────────────────────────────────────────────────────
+-- 끼니 · 카페 슬롯 — 슬롯마다 후보(trip_options)를 두고 하나를 고른다(chosen_id)
+-- ─────────────────────────────────────────────────────────────
+create table if not exists public.trip_slots (
+  id          bigint generated always as identity primary key,
+  day         date not null,
+  time        time,
+  kind        text not null check (kind in ('meal', 'cafe', 'bbq', 'spot')),
+  title       text not null,                 -- 점심 · 카페 · 저녁 바베큐 …
+  fixed       boolean not null default false, -- 고정 슬롯(후보 없이 정해짐)
+  memo        text,
+  chosen_id   bigint,
+  created_at  timestamptz not null default now()
+);
+
+create table if not exists public.trip_options (
+  id          bigint generated always as identity primary key,
+  slot_id     bigint not null references public.trip_slots (id) on delete cascade,
+  kind        text not null default 'option',
+  title       text not null,
+  area        text,                          -- 장승포 · 외포항 …
+  menu        text,                          -- 대표 메뉴 한 줄
+  memo        text,
+  url         text,
+  badge       text,                          -- 블루리본 · 주신 곳 · 제철 …
+  sort        integer not null default 0,
+  created_at  timestamptz not null default now()
+);
+
+alter table public.trip_slots   enable row level security;
+alter table public.trip_options enable row level security;
+drop policy if exists trip_slots_pass    on public.trip_slots;
+drop policy if exists trip_slots_admin   on public.trip_slots;
+drop policy if exists trip_options_pass  on public.trip_options;
+drop policy if exists trip_options_admin on public.trip_options;
+create policy trip_slots_pass    on public.trip_slots   for all to anon using (public.trip_key_ok()) with check (public.trip_key_ok());
+create policy trip_slots_admin   on public.trip_slots   for select to anon using (public.admin_ok());
+create policy trip_options_pass  on public.trip_options for all to anon using (public.trip_key_ok()) with check (public.trip_key_ok());
+create policy trip_options_admin on public.trip_options for select to anon using (public.admin_ok());
+grant select, insert, update, delete on public.trip_slots, public.trip_options to anon;
+
+-- ─────────────────────────────────────────────────────────────
 -- 기록용 표 — 누가 · 어느 기기 · 어느 IP 는 요청 헤더에서 기본값으로 채운다
 -- ─────────────────────────────────────────────────────────────
 create table if not exists public.trip_visits (          -- 접속 로그
@@ -202,6 +243,14 @@ end $$;
 
 drop trigger if exists trip_items_audit on public.trip_items;
 create trigger trip_items_audit after insert or update or delete on public.trip_items
+  for each row execute function public.trip_audit_fn();
+
+-- 슬롯 고르기 · 후보 추가/삭제도 같은 수정 내역에 남긴다
+drop trigger if exists trip_slots_audit on public.trip_slots;
+create trigger trip_slots_audit after insert or update or delete on public.trip_slots
+  for each row execute function public.trip_audit_fn();
+drop trigger if exists trip_options_audit on public.trip_options;
+create trigger trip_options_audit after insert or update or delete on public.trip_options
   for each row execute function public.trip_audit_fn();
 
 -- ─────────────────────────────────────────────────────────────

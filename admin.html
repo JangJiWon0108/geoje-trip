@@ -254,11 +254,14 @@ function color(name) {
 }
 const personOf = r => r.name || (r.device_id ? "익명 " + r.device_id.slice(0, 4) : "익명");
 let photos = {};   // 이름 → 프로필 사진(trip_people)
+let optNames = {}; // 후보 id → 이름(수정 내역의 «고른 곳» 표시용)
 const avatar = name => photos[name]
   ? `<img class="who" src="${photos[name]}" alt="${esc(name)}" style="object-fit:cover">`
   : `<span class="who" style="background:${color(name)}">${esc(String(name).slice(0, 1))}</span>`;
-const KIND = { schedule: "일정", place: "장소", check: "준비물", expense: "경비", member: "인원", setting: "설정" };
-const FIELD = { title: "제목", day: "날짜", time: "시간", memo: "메모", url: "링크", category: "분류", person: "담당", done: "챙김", amount: "금액" };
+const KIND = { schedule: "일정", place: "장소", check: "준비물", expense: "경비", member: "인원", setting: "설정",
+               meal: "끼니", cafe: "카페", bbq: "바베큐", spot: "구경", option: "후보" };
+const FIELD = { title: "제목", day: "날짜", time: "시간", memo: "메모", url: "링크", category: "분류", person: "담당", done: "챙김", amount: "금액",
+                chosen_id: "고른 곳", area: "지역", menu: "메뉴" };
 
 function empty(e, t) { return `<div class="card"><div class="empty"><span class="e">${e}</span>${t}</div></div>`; }
 function more(key, total) {
@@ -326,6 +329,7 @@ function show(k, v) {
   if (v === null || v === undefined || v === "") return "(비어 있음)";
   if (k === "done") return v ? "챙김" : "안 챙김";
   if (k === "time") return String(v).slice(0, 5);
+  if (k === "chosen_id") return optNames[v] || `후보 #${v}`;
   return String(v);
 }
 
@@ -471,6 +475,8 @@ async function load() {
       q("trip_visits"), q("trip_audit"), q("trip_cheers"), q("trip_bugs"), client.rpc("cheer_count"),
       client.from("trip_people").select("name,photo"), client.rpc("admin_settings"),
     ]);
+    const opts = await client.from("trip_options").select("id,title");
+    optNames = Object.fromEntries((opts.data || []).map(o => [o.id, o.title]));
     photos = Object.fromEntries((ppl.data || []).filter(p => p.photo).map(p => [p.name, p.photo]));
     data = { visits, audit, cheers, bugs, cheerTotal: Number(total.data || 0), settings: settings.data || {} };
     const p = n => String(n).padStart(2, "0"), d = new Date();
