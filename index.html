@@ -165,7 +165,26 @@ main { max-width: 640px; margin: -26px auto 0; padding: 0 16px calc(120px + var(
 .bar i { display: block; height: 100%; border-radius: 99px; background: linear-gradient(90deg, var(--brand), var(--brand-2));
          transition: width .4s cubic-bezier(.2, .8, .2, 1); }
 .group-h { display: flex; align-items: center; gap: 8px; margin: 18px 6px 8px; font-weight: 700; }
-.who { width: 28px; height: 28px; border-radius: 50%; display: grid; place-items: center; font-size: 13px; font-weight: 800; color: #fff; }
+.who { width: 28px; height: 28px; border-radius: 50%; display: grid; place-items: center; font-size: 13px; font-weight: 800; color: #fff;
+       flex: none; overflow: hidden; }
+img.who { display: block; object-fit: cover; background: var(--surface-2); }
+
+/* 함께 가는 사람 — 상단 얼굴 줄 · 담당자 고르기 · 이름 고르기 */
+.crew { display: flex; align-items: center; gap: 10px; margin-top: 12px; position: relative; z-index: 1; }
+.crew:empty { display: none; }
+.crew-faces { display: flex; }
+.crew-faces .who { width: 34px; height: 34px; margin-left: -10px; border: 2px solid rgba(255, 255, 255, .95);
+                   box-shadow: 0 2px 8px rgba(0, 0, 0, .18); }
+.crew-faces .who:first-child { margin-left: 0; }
+.crew-txt { font-size: 13px; font-weight: 600; opacity: .92; }
+.seg .who { display: inline-block; width: 24px; height: 24px; font-size: 11px; line-height: 24px; text-align: center;
+            vertical-align: -7px; margin-right: 5px; }
+.picks { display: flex; gap: 14px; margin: 0 0 16px; flex-wrap: wrap; }
+.pick { border: 0; background: transparent; padding: 0; display: grid; justify-items: center; gap: 5px; cursor: pointer;
+        font-size: 13px; font-weight: 700; color: var(--muted); }
+.pick .who { width: 60px; height: 60px; font-size: 22px; border: 3px solid transparent; transition: border-color .15s, transform .15s; }
+.pick.on { color: var(--text); }
+.pick.on .who { border-color: var(--brand); transform: scale(1.06); }
 .group-h .cnt { color: var(--muted); font-size: 13px; font-weight: 600; margin-left: auto; }
 .checks { padding: 4px 0; overflow: hidden; }
 .crow { display: flex; align-items: center; gap: 12px; padding: 10px 8px 10px 16px; min-height: 54px; cursor: pointer; }
@@ -220,7 +239,9 @@ main { max-width: 640px; margin: -26px auto 0; padding: 0 16px calc(120px + var(
 .seg { display: flex; gap: 6px; flex-wrap: wrap; }
 .seg button { border: 0; background: var(--surface-2); padding: 10px 14px; border-radius: 12px; font-size: 15px; font-weight: 600; cursor: pointer; }
 .seg button.on { background: var(--text); color: var(--bg); }
-.toggle-row { display: flex; align-items: center; justify-content: space-between; background: var(--surface-2); border-radius: 14px; padding: 12px 14px; font-weight: 600; }
+.field .toggle-row { display: flex; align-items: center; justify-content: space-between; margin: 0; cursor: pointer;
+                     background: var(--surface-2); border-radius: 14px; padding: 12px 14px;
+                     font-size: 16px; font-weight: 600; color: var(--text); }
 .switch { position: relative; width: 50px; height: 30px; flex: none; }
 .switch input { opacity: 0; width: 0; height: 0; }
 .switch span { position: absolute; inset: 0; border-radius: 99px; background: var(--line); transition: background .2s; }
@@ -352,6 +373,7 @@ main { max-width: 640px; margin: -26px auto 0; padding: 0 16px calc(120px + var(
   </div>
   <h1>거제 여행</h1>
   <div class="hero-sub" id="heroSub">함께 만드는 여행 계획</div>
+  <div class="crew" id="crew"></div>
   <div class="hero-actions">
     <button type="button" class="hero-btn cheer" id="cheerBtn"><span class="heart">💖</span>개발자 응원<b id="cheerN">·</b></button>
     <button type="button" class="hero-btn" id="bugBtn">🐞 버그 신고</button>
@@ -452,7 +474,7 @@ const FORMS = {
   ]},
   check: { name: "준비물", fields: [
     { k: "title", label: "준비물", required: true, placeholder: "예) 돗자리" },
-    { k: "person", label: "누가 챙기나요", list: "people" },
+    { k: "person", label: "누가 챙기나요", type: "people", list: "people" },
     { k: "done", label: "챙겼어요", type: "switch" },
   ]},
 };
@@ -502,6 +524,12 @@ const store = {
     const { data, error } = await client.rpc("trip_key_ok");
     if (error) throw error;
     return data === true;
+  },
+  async people() {
+    if (!remote) return [];
+    const { data, error } = await client.from("trip_people").select("name,photo,sort").order("sort");
+    if (error) throw error;
+    return data;
   },
   async list() {
     if (!remote) return JSON.parse(lsGet(DEMO_KEY) || "[]");
@@ -563,7 +591,14 @@ function whoColor(name) {
   for (const ch of String(name)) h = (h * 31 + ch.charCodeAt(0)) >>> 0;
   return `hsl(${HUES[h % HUES.length]} 62% 48%)`;
 }
-const who = name => `<span class="who" style="background:${whoColor(name)}">${esc(String(name).slice(0, 1))}</span>`;
+// 프로필 사진이 있으면 사진, 없으면 첫 글자 동그라미
+let people = [];
+const photoOf = name => (people.find(p => p.name === name) || {}).photo;
+const who = name => {
+  const ph = photoOf(name);
+  return ph ? `<img class="who" src="${ph}" alt="${esc(name)}">`
+            : `<span class="who" style="background:${whoColor(name)}">${esc(String(name).slice(0, 1))}</span>`;
+};
 
 let toastTimer;
 function toast(msg) {
@@ -609,6 +644,10 @@ function renderHero() {
   }
   parts.push(`장소 ${byKind("place").length} · 준비물 ${byKind("check").length}`);
   $("#heroSub").innerHTML = parts.join("<span style='opacity:.5'>·</span>");
+  $("#crew").innerHTML = people.length
+    ? `<div class="crew-faces">${people.map(p => who(p.name)).join("")}</div>
+       <span class="crew-txt">${people.map(p => esc(p.name)).join(" · ")}</span>`
+    : "";
 }
 
 // ─────────────────────────────────────────────────────────────
@@ -713,7 +752,7 @@ function render() {
 
 async function reload() {
   try {
-    items = await store.list();
+    [items, people] = await Promise.all([store.list(), store.people().catch(() => people)]);
     errMsg = "";
   } catch (e) { fail(e); }
   loaded = true;
@@ -726,6 +765,15 @@ async function reload() {
 function fieldHtml(f, row) {
   const v = row ? (row[f.k] ?? "") : (f.type === "seg" ? f.options[0] : "");
   const id = "f_" + f.k;
+  if (f.type === "people" && people.length) {
+    // 등록된 사람 얼굴로 고른다 — 목록에 없는 기존 값도 남겨 둔다
+    const names = people.map(p => p.name);
+    if (v && !names.includes(v)) names.push(v);
+    const opts = [...names.map(n => [n, `${who(n)}${esc(n)}`]), ["", "미정"]];
+    return `<div class="field"><label>${f.label}</label><div class="seg" data-seg="${id}">${opts.map(([o, label]) =>
+      `<button type="button" data-v="${esc(o)}" class="${o === v ? "on" : ""}">${label}</button>`).join("")}</div>
+      <input type="hidden" id="${id}" value="${esc(v)}"></div>`;
+  }
   if (f.type === "switch") {
     return `<div class="field"><label class="toggle-row" for="${id}">${f.label}
       <span class="switch"><input type="checkbox" id="${id}" ${v ? "checked" : ""}><span></span></span></label></div>`;
@@ -826,7 +874,9 @@ function setName(name) {
 function openName(first) {
   openPanel(`<div class="handle"></div><h3>${first ? "반가워요 👋" : "이름 바꾸기"}</h3>
     <p class="sheet-sub">누가 고쳤는지 · 누가 응원했는지 남길 때 써요</p>
-    <div class="field"><label for="f_name">이름</label>
+    ${people.length ? `<div class="picks">${people.map(p =>
+      `<button type="button" class="pick${p.name === myName() ? " on" : ""}" data-pick="${esc(p.name)}">${who(p.name)}${esc(p.name)}</button>`).join("")}</div>` : ""}
+    <div class="field"><label for="f_name">${people.length ? "얼굴을 누르거나 직접 적어 주세요" : "이름"}</label>
       <input id="f_name" maxlength="10" required value="${esc(myName())}" placeholder="예) 지원" autocomplete="nickname"></div>
     <div class="actions">${first ? "" : `<button type="button" class="btn soft" id="sCancel">취소</button>`}
       <button class="btn primary">${first ? "시작하기" : "저장"}</button></div>`, () => {
@@ -834,7 +884,12 @@ function openName(first) {
     setName(name);
     closeSheet();
     if (name) toast(`${name} 님 반가워요 🙌`);
-  }, true);
+  }, !people.length);
+  $("#sheet").querySelectorAll("[data-pick]").forEach(b => b.onclick = () => {
+    $("#sheet").querySelectorAll("[data-pick]").forEach(x => x.classList.toggle("on", x === b));
+    $("#f_name").value = b.dataset.pick;
+    vibrate();
+  });
 }
 
 $("#sync").onclick = () => { if (remote && client) openName(false); };
@@ -1101,12 +1156,13 @@ $("#lockForm").onsubmit = async e => {
 };
 
 // 암호가 맞은 뒤 — 이름이 없으면 먼저 묻고, 접속 기록 · 응원 숫자를 불러온다
-function afterAuth() {
-  reload();
+async function afterAuth() {
+  const loading = reload();
   loadCheer();
   if (myName()) return logVisit();
   onSheetClosed = logVisit;
-  setTimeout(() => openName(true), 500);
+  await loading;                       // 얼굴로 고를 수 있게 사람 목록부터 읽는다
+  setTimeout(() => openName(true), 300);
 }
 
 async function start() {

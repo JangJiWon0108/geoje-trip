@@ -62,6 +62,27 @@ create policy trip_items_pass on public.trip_items
 grant select, insert, update, delete on public.trip_items to anon;
 
 -- ─────────────────────────────────────────────────────────────
+-- 함께 가는 사람 — 이름 · 프로필 사진(data URL). 사진은 저장소가 아니라 여기에만 둔다
+-- ─────────────────────────────────────────────────────────────
+create table if not exists public.trip_people (
+  id          bigint generated always as identity primary key,
+  name        text not null unique,
+  photo       text,
+  sort        integer not null default 0,
+  created_at  timestamptz not null default now()
+);
+
+alter table public.trip_people enable row level security;
+drop policy if exists trip_people_pass on public.trip_people;
+drop policy if exists trip_people_admin on public.trip_people;
+create policy trip_people_pass on public.trip_people
+  for all to anon
+  using (public.trip_key_ok())
+  with check (public.trip_key_ok());
+create policy trip_people_admin on public.trip_people for select to anon using (public.admin_ok());
+grant select, insert, update, delete on public.trip_people to anon;
+
+-- ─────────────────────────────────────────────────────────────
 -- 기록용 표 — 누가 · 어느 기기 · 어느 IP 는 요청 헤더에서 기본값으로 채운다
 -- ─────────────────────────────────────────────────────────────
 create table if not exists public.trip_visits (          -- 접속 로그
