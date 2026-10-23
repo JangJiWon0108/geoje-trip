@@ -139,6 +139,25 @@ main { max-width: 640px; margin: -26px auto 0; padding: 0 16px calc(120px + var(
 .pick-card .place-act { align-items: center; }
 .swap { margin-left: auto; font-size: 12px; font-weight: 700; color: var(--muted); }
 .slot-memo { font-size: 12px; color: var(--muted); margin-top: 9px; }
+
+/* 세부 항목 — 메모를 한 줄에 하나씩, 앞 이모지는 아이콘 칸으로. 줄이 많으면 접는다 */
+.memo { list-style: none; margin: 10px 0 0; padding: 0; display: grid; gap: 7px; }
+.memo li { display: flex; gap: 9px; align-items: flex-start; font-size: 14px; line-height: 1.45; color: var(--text); }
+.memo li i { font-style: normal; width: 26px; height: 26px; flex: none; display: grid; place-items: center;
+             border-radius: 9px; background: var(--surface-2); font-size: 14px; }
+.memo li span { padding-top: 3px; word-break: keep-all; overflow-wrap: anywhere; }
+.memo-more { display: none; }
+.memo-box.open .memo-more { display: grid; margin-top: 7px; }
+.fold-btn { margin-top: 9px; display: inline-flex; align-items: center; gap: 4px; border: 0; cursor: pointer;
+            font: inherit; font-size: 12.5px; font-weight: 800; color: var(--brand); background: var(--brand-soft);
+            padding: 6px 11px; border-radius: 999px; }
+.fold-btn .chev { transition: transform .2s; }
+.memo-box.open .fold-btn .chev { transform: rotate(180deg); }
+.memo-box .less, .memo-box.open .more { display: none; }
+.memo-box.open .less { display: inline; }
+.slot.fixed .memo li { color: #fff; font-weight: 600; }
+.slot.fixed .memo li i { background: rgba(255, 255, 255, .22); }
+.slot.fixed .fold-btn { color: #fff; background: rgba(255, 255, 255, .22); }
 .slot.fixed { background: linear-gradient(135deg, #ff9a3c 0%, #ff5f6d 100%); color: #fff; box-shadow: 0 10px 26px rgba(255, 95, 109, .3); }
 .slot.fixed .slot-ic { background: rgba(255, 255, 255, .22); }
 .slot.fixed .slot-st { background: rgba(255, 255, 255, .25); color: #fff; }
@@ -796,6 +815,43 @@ function mapLinks(o) {
     ${o.url ? `<a class="pill ghost" href="${esc(o.url)}" target="_blank" rel="noopener" data-stop>${ICON.link}${srcName(o.url)}</a>` : ""}`;
 }
 
+// 세부 항목 — 줄바꿈으로 나눈 메모를 «아이콘 + 글» 줄로 그린다.
+// 줄바꿈이 없는 옛 메모는 « · » 로 나누고, 앞에 이모지가 없으면 낱말을 보고 아이콘을 붙인다.
+const MEMO_IC = [
+  [/금연/, "🚭"], [/반려/, "🐶"], [/금지/, "🚫"], [/비 오면|우천/, "☔"], [/주차/, "🅿️"],
+  [/\d{2,4}-\d{3,4}-\d{4}/, "📞"], [/휴무/, "📅"], [/\d\s*(만\s*)?원|결제/, "💰"],
+  [/기차|KTX|무궁화|환승/, "🚄"], [/차로|운전|거가대교/, "🚗"], [/걸어|도보|산책/, "🚶"],
+  [/\d{1,2}:\d{2}|체크인|체크아웃|퇴실|오픈/, "⏰"], [/(로|길)\s?\d/, "📍"], [/리뷰/, "⭐"],
+];
+const LEAD_EMOJI = /^(\p{Extended_Pictographic}(?:️|‍\p{Extended_Pictographic})*️?)\s*/u;
+const openFolds = new Set();   // 펼친 카드 — 다시 그려도 펼친 채로 둔다
+
+function memoRows(memo) {
+  const text = String(memo || "").trim();
+  if (!text) return [];
+  // 한 줄 메모는 이모지로 시작하면 그대로 한 줄, 아니면 « · » 가 셋 이상일 때만 나눈다
+  const dots = text.split(/\s+·\s+/);
+  const parts = text.includes("\n") ? text.split(/\n+/)
+    : !LEAD_EMOJI.test(text) && dots.length >= 3 ? dots : [text];
+  return parts.map(t => t.trim()).filter(Boolean).map(t => {
+    const m = t.match(LEAD_EMOJI);
+    if (m) return { ic: m[1], t: t.slice(m[0].length) };
+    const hit = MEMO_IC.find(([re]) => re.test(t));
+    return { ic: hit ? hit[1] : "💬", t };
+  });
+}
+
+function memoHTML(memo, key) {
+  const rows = memoRows(memo);
+  if (!rows.length) return "";
+  const li = list => list.map(r => `<li><i>${esc(r.ic)}</i><span>${esc(r.t)}</span></li>`).join("");
+  // 세 줄까지는 다 보이고, 넘으면 두 줄만 보이고 나머지는 «더보기»
+  if (rows.length <= 3) return `<ul class="memo">${li(rows)}</ul>`;
+  return `<div class="memo-box${openFolds.has(key) ? " open" : ""}" data-fold="${esc(key)}">
+    <ul class="memo">${li(rows.slice(0, 2))}</ul><ul class="memo memo-more">${li(rows.slice(2))}</ul>
+    <button type="button" class="fold-btn" data-fold-btn><span class="more">더보기 +${rows.length - 2}</span><span class="less">접기</span><span class="chev">▾</span></button></div>`;
+}
+
 // 대표 사진 — 없거나 못 불러오면 아이콘 카드가 보인다(외부 사이트 사진은 리퍼러 없이 불러온다)
 function thumb(o, cls, ic) {
   return `<div class="ph ${cls}"><span>${ic}</span>${o.photo_url
@@ -820,7 +876,7 @@ function slotCard(s) {
       <div class="slot-hint">눌러서 하나 골라 주세요 👆</div>`;
   }
   return `<div class="slot card press${s.fixed ? " fixed" : ""}${picked ? " done" : ""}" data-slot="${s.id}">${head}${body}
-    ${s.memo ? `<div class="slot-memo">${esc(s.memo)}</div>` : ""}</div>`;
+    ${memoHTML(s.memo, "s" + s.id)}</div>`;
 }
 
 function renderSchedule() {
@@ -855,7 +911,7 @@ function renderSchedule() {
     html += `<div class="tl fade-in">
       <div class="tl-time">${time}</div><div class="tl-rail"></div>
       <div class="tl-card card press" data-id="${esc(r.id)}">${r.photo_url ? thumb(r, "big", "🏠") : ""}<b>${esc(r.title)}</b>
-        ${r.memo ? `<p>${esc(r.memo)}</p>` : ""}
+        ${memoHTML(r.memo, "i" + r.id)}
         ${r.url ? `<div class="place-act"><a class="pill ghost" href="${esc(r.url)}" target="_blank" rel="noopener" data-stop>${ICON.link}링크</a></div>` : ""}
       </div></div>`;
   }
@@ -1636,6 +1692,12 @@ $("#fab").onclick = () => openSheet(tab);
 
 $("#view").onclick = async e => {
   if (e.target.closest("[data-stop]")) return;
+  const fold = e.target.closest("[data-fold-btn]");
+  if (fold) {
+    const box = fold.closest("[data-fold]"), key = box.dataset.fold;
+    box.classList.toggle("open") ? openFolds.add(key) : openFolds.delete(key);
+    return;
+  }
   const find = id => items.find(x => String(x.id) === id);
 
   const edit = e.target.closest("[data-edit]");
