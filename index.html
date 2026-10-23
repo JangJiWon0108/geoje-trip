@@ -280,11 +280,6 @@ img.who { display: block; object-fit: cover; background: var(--surface-2); }
 .dots { opacity: .7; }
 .carpin { display: grid; justify-items: center; cursor: grab; filter: drop-shadow(0 4px 6px rgba(0, 0, 0, .3)); }
 .carpin:active { cursor: grabbing; }
-.carpin .faces { display: flex; margin-bottom: -10px; position: relative; z-index: 1; }
-.carpin .faces img, .carpin .faces span { width: 22px; height: 22px; border-radius: 50%; border: 2px solid #fff; margin-left: -6px;
-                                          object-fit: cover; background: var(--brand); color: #fff; font-size: 10px; font-weight: 800;
-                                          display: grid; place-items: center; }
-.carpin .faces :first-child { margin-left: 0; }
 .carpin .car { font-size: 38px; line-height: 1; transition: transform .2s; }
 .car-tag { margin-bottom: 4px; background: var(--text); color: #fff; font-size: 11px; font-weight: 800; padding: 3px 8px;
            border-radius: 99px; white-space: nowrap; max-width: 200px; overflow: hidden; text-overflow: ellipsis; }
@@ -1332,12 +1327,10 @@ function setupCar(ml, el, stops, runs, done) {
   }
   for (let i = 1; i < stops.length; i++) if (stopAt[i] == null) stopAt[i] = path.length - 1;
 
-  // 2) 차 핀 — 얼굴 네 개 + 🚗
-  const faces = people.slice(0, 4).map(p => p.photo
-    ? `<img src="${p.photo}" alt="${esc(p.name)}">` : `<span>${esc(p.name.slice(0, 1))}</span>`).join("");
+  // 2) 차 핀 — 🚗
   const car = document.createElement("div");
   car.className = "carpin";
-  car.innerHTML = `<div class="car-tag" id="carTag">출발!</div><div class="faces">${faces}</div><div class="car">🚗</div>`;
+  car.innerHTML = `<div class="car-tag" id="carTag">출발!</div><div class="car">🚗</div>`;
   const marker = new ml.Marker({ element: car, anchor: "bottom", draggable: true }).setLngLat(path[0]).addTo(map);
 
   // 3) 위치 → 경로에 붙이기 + 다음 들를 곳 표시 + 방향 따라 차 뒤집기
