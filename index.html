@@ -278,8 +278,7 @@ img.who { display: block; object-fit: cover; background: var(--surface-2); }
 .map-loading .spin { width: 18px; height: 18px; border-radius: 50%; border: 3px solid var(--line); border-top-color: var(--brand);
                      animation: spin .8s linear infinite; display: inline-block; vertical-align: -4px; margin-right: 8px; }
 .dots { opacity: .7; }
-.carpin { display: grid; justify-items: center; cursor: grab; filter: drop-shadow(0 4px 6px rgba(0, 0, 0, .3)); }
-.carpin:active { cursor: grabbing; }
+.carpin { display: grid; justify-items: center; pointer-events: none; filter: drop-shadow(0 4px 6px rgba(0, 0, 0, .3)); }
 .carpin .car { font-size: 38px; line-height: 1; transition: transform .2s; }
 .car-tag { margin-bottom: 4px; background: var(--text); color: #fff; font-size: 11px; font-weight: 800; padding: 3px 8px;
            border-radius: 99px; white-space: nowrap; max-width: 200px; overflow: hidden; text-overflow: ellipsis; }
@@ -313,6 +312,25 @@ img.who { display: block; object-fit: cover; background: var(--surface-2); }
 .carpin.arrive .car { animation: hop .45s ease; }
 @keyframes tagpop { 0% { transform: scale(.7); } 60% { transform: scale(1.12); } 100% { transform: scale(1); } }
 @keyframes hop { 0%, 100% { translate: 0 0; } 40% { translate: 0 -10px; } }
+/* 달리는 중 — 덜컹덜컹(기차는 살짝만) · 배기 연기 · 장소 이모지 뿅 · 날짜 띠 */
+.carpin.moving .car { animation: rumble .28s ease-in-out infinite; }
+.carpin.moving.train .car { animation-duration: .5s; }
+@keyframes rumble { 0%, 100% { translate: 0 0; rotate: 0deg; } 30% { translate: 0 -2px; rotate: -3deg; } 70% { translate: 0 -1px; rotate: 2deg; } }
+.puff { position: absolute; z-index: 1; pointer-events: none; font-size: 17px; font-style: normal; opacity: .9;
+        transform: translate(-50%, -50%) scaleX(var(--f, 1)); animation: puff .9s ease-out forwards; }
+@keyframes puff { to { opacity: 0; transform: translate(calc(-50% + var(--dx, 0px)), calc(-50% - 16px)) scaleX(var(--f, 1)) scale(1.9); } }
+.stop-pop { position: absolute; z-index: 3; pointer-events: none; font-size: 40px; font-style: normal;
+            transform: translate(-50%, -50%); animation: stoppop 1.1s cubic-bezier(.2, 1.4, .4, 1) forwards; }
+@keyframes stoppop { 0% { transform: translate(-50%, -20%) scale(.2); opacity: 0; } 25% { transform: translate(-50%, -60%) scale(1.25); opacity: 1; }
+                     70% { transform: translate(-50%, -90%) scale(1); opacity: 1; } 100% { transform: translate(-50%, -150%) scale(.8); opacity: 0; } }
+.day-banner { position: absolute; z-index: 3; pointer-events: none; font-style: normal; white-space: nowrap;
+              padding: 10px 20px; border-radius: 99px; font-size: 18px; font-weight: 900; color: #fff;
+              background: linear-gradient(90deg, var(--brand), var(--brand-2)); box-shadow: 0 8px 24px rgba(0, 0, 0, .25);
+              transform: translate(-50%, -50%); animation: banner 2s ease forwards; }
+@keyframes banner { 0% { transform: translate(-50%, -50%) scale(.4); opacity: 0; } 15% { transform: translate(-50%, -50%) scale(1.1); opacity: 1; }
+                    25%, 80% { transform: translate(-50%, -50%) scale(1); opacity: 1; } 100% { transform: translate(-50%, -80%) scale(.9); opacity: 0; } }
+.tb-stop.boing { animation: boing .5s ease; }
+@keyframes boing { 30% { scale: 1.35; rotate: -8deg; } 60% { scale: .95; rotate: 4deg; } 100% { scale: 1; rotate: 0deg; } }
 .pin.pulse { animation: pinpulse .9s ease; }
 @keyframes pinpulse { 0% { box-shadow: 0 0 0 0 var(--c); transform: scale(1); } 40% { transform: scale(1.35); }
                       100% { box-shadow: 0 0 0 16px transparent; transform: scale(1); } }
@@ -1341,7 +1359,7 @@ async function drawRoute() {
 }
 
 // ─────────────────────────────────────────────────────────────
-// 우리 차 🚗 — 진행 막대를 끌거나 칩을 누르면 동선을 따라 달리고, 카메라가 따라간다(차를 직접 끌어도 됨)
+// 우리 차 🚗 — 진행 막대를 끌거나 칩을 누르면 동선을 따라 천천히 달리고, 카메라가 따라간다
 // ─────────────────────────────────────────────────────────────
 function setupCar(ml, el, stops, runs, done, pins) {
   if (stops.length < 2) return;
@@ -1370,7 +1388,7 @@ function setupCar(ml, el, stops, runs, done, pins) {
   const car = document.createElement("div");
   car.className = "carpin";
   car.innerHTML = `<div class="car-tag" id="carTag">출발!</div><div class="car">🚗</div>`;
-  const marker = new ml.Marker({ element: car, anchor: "bottom", draggable: true }).setLngLat(path[0]).addTo(map);
+  const marker = new ml.Marker({ element: car, anchor: "bottom" }).setLngLat(path[0]).addTo(map);
 
   // 3) 경로 거리를 잰다 — 진행 막대는 들르는 곳마다 같은 간격(서울→울산 기차가 막대를 다 먹지 않게),
   //    한 구간 안에서는 실제 거리 비율로 움직인다
@@ -1382,14 +1400,6 @@ function setupCar(ml, el, stops, runs, done, pins) {
   }
   const n = stops.length - 1;
   const at = i => cum[stopAt[Math.max(0, Math.min(n, i))]];
-  // 경로 위 거리 d → 막대 비율
-  const fracOfDist = d => {
-    let i = 0;
-    while (i < n - 1 && at(i + 1) < d) i++;
-    const span = at(i + 1) - at(i);
-    return (i + (span > 0 ? Math.max(0, Math.min(1, (d - at(i)) / span)) : 1)) / n;
-  };
-  const fracOfIdx = k => fracOfDist(cum[k]);
 
   // 4) 진행 카드 — 지도 위쪽. 막대(들르는 곳마다 눈금) + 들르는 곳 칩(누르면 그곳으로 달려감)
   const color = s => DAY_COLOR[s.dayN] || DAY_COLOR[0];
@@ -1419,7 +1429,7 @@ function setupCar(ml, el, stops, runs, done, pins) {
     return Math.max(5.5, Math.min(13.5, Math.log2(360 * el.clientWidth / (256 * span * 2.4))));
   };
   const camLoop = () => {
-    const c = map.getCenter(), z = map.getZoom(), k = .2;
+    const c = map.getCenter(), z = map.getZoom(), k = .12;
     const nc = [c.lng + (cam.pt[0] - c.lng) * k, c.lat + (cam.pt[1] - c.lat) * k], nz = z + (cam.z - z) * k;
     map.jumpTo({ center: nc, zoom: nz });
     const settled = Math.abs(nz - cam.z) < .01 && Math.hypot(nc[0] - cam.pt[0], nc[1] - cam.pt[1]) < 1e-5;
@@ -1427,8 +1437,40 @@ function setupCar(ml, el, stops, runs, done, pins) {
   };
   const kick = () => { if (!camRaf) camRaf = requestAnimationFrame(camLoop); };
 
+  // 지나온 길 — 금빛으로 칠해진다
+  const glow = { "line-cap": "round", "line-join": "round" };
+  map.addSource("trail", { type: "geojson", data: { type: "FeatureCollection", features: [] } });
+  map.addLayer({ id: "trail-glow", type: "line", source: "trail", layout: glow,
+                 paint: { "line-color": "#ffb703", "line-width": 14, "line-blur": 7, "line-opacity": .45 } });
+  map.addLayer({ id: "trail", type: "line", source: "trail", layout: glow,
+                 paint: { "line-color": "#ffb703", "line-width": 4.5 } });
+  const trail = map.getSource("trail");
+
+  // 지도 위에 잠깐 떴다 사라지는 것(배기 연기 · 장소 이모지 · 날짜 바뀜 띠)
+  const spawn = (cls, text, x, y, vars = {}) => {
+    const e = document.createElement("i");
+    e.className = cls;
+    e.textContent = text;
+    e.style.left = x + "px"; e.style.top = y + "px";
+    Object.entries(vars).forEach(([k, v]) => e.style.setProperty(k, v));
+    e.addEventListener("animationend", () => e.remove());
+    el.appendChild(e);
+  };
+  // 배기 연기 — 차 뒤쪽으로 퐁퐁(기차는 구름 연기)
+  const puff = (xy, dir, train) => {
+    const L = Math.hypot(dir.x, dir.y) || 1, ux = dir.x / L, uy = dir.y / L;
+    spawn("puff", train ? "☁️" : "💨", xy.x - ux * 26, xy.y - 16 - uy * 12, {
+      "--dx": `${(-ux * 30 + (Math.random() - .5) * 14).toFixed(1)}px`,
+      "--f": ux > 0 ? 1 : -1,
+    });
+  };
+  const dayBanner = s => {
+    const text = s.dayN === 0 ? "🚀 Day 1 — 출발!" : `🌅 Day ${s.dayN + 1} — 좋은 아침!`;
+    spawn("day-banner", text, el.clientWidth / 2, el.clientHeight * .55);
+  };
+
   // 6) 비율 → 경로 위 위치(꼭짓점 사이는 보간) · 기차 구간은 🚄 · 들르는 곳에 닿으면 도착 표시 + 핀 반짝
-  let lastStop = -1, cheered = false;
+  let lastStop = -1, cheered = false, lastPuff = 0;
   const place = f => {
     f = Math.max(0, Math.min(1, f));
     const i = Math.min(n - 1, Math.floor(f * n));
@@ -1439,6 +1481,7 @@ function setupCar(ml, el, stops, runs, done, pins) {
     const a = path[k - 1], b = path[k] || a;
     const pt = [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t];
     marker.setLngLat(pt);
+    trail.setData({ type: "Feature", geometry: { type: "LineString", coordinates: [...path.slice(0, k), pt] } });
 
     const train = stops[i + 1].via === "train";
     carEl.textContent = train ? "🚄" : "🚗";
@@ -1453,11 +1496,20 @@ function setupCar(ml, el, stops, runs, done, pins) {
     $("#carTag").textContent = tag;
     $("#tbNow").textContent = now;
     car.classList.toggle("arrive", arrived || f >= 1);
+    car.classList.toggle("moving", !arrived && f < 1);
+    car.classList.toggle("train", train && !arrived);
     $("#tbPct").textContent = `${Math.round(f * 100)}%`;
     $("#tbFill").style.width = `${f * 100}%`;
-    range.value = Math.round(f * 1000);
 
-    // 들르는 곳에 처음 닿을 때 — 진동 · 핀 반짝 · 칩 표시(끝까지 가면 폭죽)
+    // 달리는 동안 배기 연기
+    const xy = map.project(pt), ts = performance.now();
+    if (!arrived && f < 1 && ts - lastPuff > (train ? 140 : 110)) {
+      lastPuff = ts;
+      const pa = map.project(a), pb = map.project(b);
+      puff(xy, { x: pb.x - pa.x, y: pb.y - pa.y }, train);
+    }
+
+    // 들르는 곳에 처음 닿을 때 — 진동 · 핀 반짝 · 장소 이모지 뿅 · 작은 폭죽 · 날짜 바뀌면 띠(끝까지 가면 큰 폭죽)
     const active = arrived ? near : i + 1;
     chips.forEach((c, j) => { c.classList.toggle("on", j === active); c.classList.toggle("past", j < active); });
     if (arrived && near !== lastStop) {
@@ -1466,9 +1518,14 @@ function setupCar(ml, el, stops, runs, done, pins) {
       const pin = pins[near];
       if (pin) { pin.classList.remove("pulse"); void pin.offsetWidth; pin.classList.add("pulse"); }
       chips[near].scrollIntoView({ block: "nearest", inline: "center", behavior: "smooth" });
+      chips[near].classList.remove("boing"); void chips[near].offsetWidth; chips[near].classList.add("boing");
+      spawn("stop-pop", s.ic, xy.x, xy.y - 60);
+      const r = el.getBoundingClientRect();
+      if (near > 0 && f < 1) fx.burst(r.left + xy.x, r.top + xy.y - 30, 16);
+      if (near === 0 || s.dayN !== stops[near - 1].dayN) dayBanner(s);
     }
     if (!arrived) lastStop = -1;
-    if (f >= 1 && !cheered) { cheered = true; fx.burst(innerWidth / 2, innerHeight * .4, 70); }
+    if (f >= 1 && !cheered) { cheered = true; fx.burst(innerWidth / 2, innerHeight * .4, 70); fx.balloons(5); }
     if (f < .97) cheered = false;
 
     cam.pt = pt;
@@ -1476,34 +1533,47 @@ function setupCar(ml, el, stops, runs, done, pins) {
     if (follow) kick();
   };
 
-  // 7) 막대 끌기 — 끄는 동안 카메라가 따라간다
-  const start = () => { follow = true; cancelAnimationFrame(goRaf); kick(); };
-  const stop = () => { follow = false; kick(); };
+  // 7) 운전 — 막대 손잡이는 목표, 차는 그 목표를 천천히 쫓아간다.
+  //    들르는 곳 근처에선 브레이크를 밟듯 느려져서, 빨리 끌어도 장소마다 잠깐씩 머문다
+  let cur = 0, goal = 0, dragging = false, driveRaf = null, prevT = 0;
+  const drive = t => {
+    const dt = Math.min(.05, (t - prevT) / 1000 || .016);
+    prevT = t;
+    const gap = goal - cur;
+    if (Math.abs(gap) < 1e-4) {
+      cur = goal; place(cur);
+      driveRaf = null;
+      if (!dragging) { follow = false; kick(); }
+      return;
+    }
+    const off = Math.abs(cur * n - Math.round(cur * n));           // 0(장소 위) ~ .5(구간 한가운데)
+    const speed = (1 + Math.abs(gap) * n * .35) * (.3 + off * 1.6); // 들르는 곳/초
+    cur += Math.sign(gap) * Math.min(Math.abs(gap), speed * dt / n);
+    place(cur);
+    driveRaf = requestAnimationFrame(drive);
+  };
+  const go = f => {
+    goal = Math.max(0, Math.min(1, f));
+    follow = true; kick();
+    if (!driveRaf) { prevT = performance.now(); driveRaf = requestAnimationFrame(drive); }
+  };
+
+  // 막대 끌기 — 손잡이를 놓아도 차는 목표까지 마저 달린다
+  const start = () => { dragging = true; follow = true; kick(); };
+  const stop = () => { dragging = false; if (!driveRaf) { follow = false; kick(); } };
   range.addEventListener("pointerdown", start);
   range.addEventListener("touchstart", start, { passive: true });
-  range.addEventListener("input", () => { if (!follow) start(); place(range.value / 1000); });
+  range.addEventListener("input", () => go(range.value / 1000));
   ["pointerup", "touchend", "change"].forEach(t => range.addEventListener(t, stop));
 
-  // 8) 칩 누르기 — 지금 자리에서 그곳까지 부드럽게 달려간다
-  let goRaf = 0;
+  // 8) 칩 누르기 — 손잡이를 그곳으로 옮기고 차가 달려간다
   bar.querySelector("#tbStops").addEventListener("click", e => {
     const c = e.target.closest("[data-go]");
     if (!c) return;
-    cancelAnimationFrame(goRaf);
-    const from = range.value / 1000, to = +c.dataset.go / n, t0 = performance.now();
-    const dur = 450 + Math.min(1400, Math.abs(to - from) * n * 260);
-    follow = true; kick();
-    const step = t => {
-      const p = Math.min(1, (t - t0) / dur), e2 = p < .5 ? 2 * p * p : 1 - (-2 * p + 2) ** 2 / 2;
-      place(from + (to - from) * e2);
-      if (p < 1) goRaf = requestAnimationFrame(step); else stop();
-    };
-    goRaf = requestAnimationFrame(step);
+    range.value = Math.round(+c.dataset.go / n * 1000);
+    go(+c.dataset.go / n);
   });
 
-  // 차를 직접 끌어도 막대가 따라온다(카메라는 그대로)
-  marker.on("drag", () => { const ll = marker.getLngLat(); place(fracOfIdx(nearestIdx(path, [ll.lng, ll.lat]))); });
-  marker.on("dragend", () => { place(range.value / 1000); vibrate(); });
   place(0);
 }
 
