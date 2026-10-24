@@ -232,7 +232,8 @@ const LIMIT = 1000;
 
 let client = null;
 let data = { visits: [], audit: [], cheers: [], bugs: [], cheerTotal: 0 };
-let tab = localGet(TAB_KEY) || "visits";
+const TABS = ["visits", "audit", "cheers", "bugs", "places", "settings"];
+let tab = TABS.includes(localGet(TAB_KEY)) ? localGet(TAB_KEY) : "visits";
 let bugFilter = "new";
 const shown = { visits: 50, audit: 50, cheers: 30 };
 
@@ -632,7 +633,7 @@ $("#view").addEventListener("submit", async e => {
     const name = f.name.trim();
     const row = { name, category: f.category, area: f.area.trim() || null, menu: f.menu.trim() || null, memo: f.memo.trim() || null,
                   source: "관리자 추가", source_url: f.source_url.trim(), photo_url: f.photo_url.trim() || null,
-                  map_url: "https://m.map.naver.com/search?query=" + encodeURIComponent("거제 " + name) };
+                  map_url: "https://m.map.naver.com/search?query=" + encodeURIComponent(((f.area || "").includes("통영") ? "통영 " : "거제 ") + name) };
     const { error } = await client.from("trip_places").insert(row);
     if (error) return toast(/duplicate|unique/.test(error.message) ? "이미 있는 장소예요" : "추가하지 못했어요 — " + error.message);
     toast("장소를 추가했어요");
@@ -672,6 +673,7 @@ $("#view").onclick = async e => {
   const pd = e.target.closest("[data-pdel]");
   if (pd) {
     const p = data.places.find(x => String(x.id) === pd.dataset.pdel);
+    if (!p) return;
     if (!confirm(`«${p.name}» 을(를) 장소 DB 에서 지울까요?\n(일정 탭의 후보는 그대로 남아요)`)) return;
     const { error } = await client.from("trip_places").delete().eq("id", p.id);
     if (error) return toast("지우지 못했어요 — " + error.message);
@@ -690,6 +692,7 @@ $("#view").onclick = async e => {
   const s = e.target.closest("[data-status]");
   if (s) {
     const b = data.bugs.find(x => String(x.id) === s.dataset.status);
+    if (!b) return;
     const status = b.status === "new" ? "done" : "new";
     b.status = status;
     render();

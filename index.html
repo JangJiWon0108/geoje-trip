@@ -492,6 +492,7 @@ img.who { display: block; object-fit: cover; background: var(--surface-2); }
          text-shadow: 0 2px 10px rgba(0, 0, 0, .18); transform: translate(-50%, -50%); animation: up .9s ease-out forwards; }
 @keyframes up { to { transform: translate(-50%, -190%) scale(1.35); opacity: 0; } }
 .sheet-sub { margin: -8px 0 16px; color: var(--muted); font-size: 14px; }
+.sheet-memo { margin: -8px 0 16px; }
 .from { font-size: 13px; color: var(--muted); margin: 2px 2px 0; }
 .from b { color: var(--text); }
 
@@ -966,10 +967,11 @@ function renderSchedule() {
 
 // 슬롯 시트 — 후보를 누르면 바로 정해진다
 function openSlot(s) {
-  if (s.fixed) return toast(`${slotIcon(s)} ${s.title}은 정해져 있어요`);
+  if (s.fixed) return toast(`${slotIcon(s)} 이미 정해진 일정이에요`);
   const opts = optionsOf(s.id);
   const html = `<div class="handle"></div><h3>${slotIcon(s)} ${esc(s.title)} 고르기</h3>
-    <p class="sheet-sub">${dayLabel(s.day)} ${esc((s.time || "").slice(0, 5))}${s.memo ? " · " + esc(s.memo) : ""}</p>
+    <p class="sheet-sub">${dayLabel(s.day)} ${esc((s.time || "").slice(0, 5))}</p>
+    ${s.memo ? `<ul class="memo sheet-memo">${memoRows(s.memo).map(r => `<li><i>${esc(r.ic)}</i><span>${esc(r.t)}</span></li>`).join("")}</ul>` : ""}
     <div class="opts">${opts.map(o => `<div class="opt${o.id === s.chosen_id ? " on" : ""}" data-opt="${o.id}">
       <div class="opt-thumb">${thumb(o, "sq", slotIcon(s))}<span class="radio"></span></div>
       <div class="opt-main">
@@ -1154,6 +1156,7 @@ let routeDay = "all";
 const DAY_COLOR = ["#ff6b5a", "#0e8f8f", "#7c5cff"];
 const MAP_STYLE = "https://tiles.openfreemap.org/styles/positron";
 let mapLibP = null, map = null;
+let routeGo = null;   // 동선 차를 n번째 장소로 보내기(차가 준비되면 setupCar 가 채운다)
 
 // 지도 라이브러리(MapLibre) — 앱을 열면 미리 받아 두고, 동선 탭에서 바로 쓴다
 function loadMap() {
@@ -1266,7 +1269,7 @@ function routeListHtml(stops, legs) {
   let html = `<div class="route-list card">`, cur = null;
   stops.forEach((s, i) => {
     const leg = legs[i];
-    if (i && s.day === cur) html += `<div class="leg">${stops[i].via === "train" ? "🚄 기차 (SRT)"
+    if (i && s.day === cur) html += `<div class="leg">${stops[i].via === "train" ? "🚄 기차"
       : leg ? `🚗 ${leg.km.toFixed(leg.km < 10 ? 1 : 0)}km · ${fmtMin(leg.min)}` : `<span class="dots">🚗 길 찾는 중</span>`}</div>`;
     if (s.day !== cur) { cur = s.day; html += `<div class="route-day">DAY ${s.dayN + 1} · ${esc(dayLabel(s.day))}</div>`; }
     html += `<div class="stop" data-stop-i="${i}"><span class="num" style="background:${DAY_COLOR[s.dayN] || DAY_COLOR[0]}">${i + 1}</span>
@@ -1288,9 +1291,10 @@ async function drawRoute() {
   $("#routeList").onclick = e => {
     const st = e.target.closest("[data-stop-i]");
     if (!st || !map) return;
-    const s = stops[+st.dataset.stopI];
-    map.flyTo({ center: [s.lng, s.lat], zoom: 14 });
-    window.scrollTo({ top: 0, behavior: "smooth" });
+    const i = +st.dataset.stopI, s = stops[i];
+    if (routeGo) routeGo(i); else map.flyTo({ center: [s.lng, s.lat], zoom: 14 });
+    const top = ($(".trip-bar") || el).getBoundingClientRect().top + scrollY - 12;
+    window.scrollTo({ top, behavior: "smooth" });
   };
   const routed = Promise.all(runs.map(run => carRoute(stops.slice(run.start, run.end + 1))
     .then(r => ({ run, r }), () => ({ run, r: null }))));
@@ -1355,14 +1359,15 @@ async function drawRoute() {
                    paint: { "line-color": ["get", "color"], "line-width": 4.5 } });
     $("#routeSum").textContent = `${stops.length}곳 · 🚗 ${Math.round(km)}km · ${fmtMin(min)}`;
     $("#routeList").innerHTML = routeListHtml(stops, legs);
-    setupCar(ml, el, stops, runs, done, pins);
+    setupCar(ml, el, stops, runs, done, pins, map);
   });
 }
 
 // ─────────────────────────────────────────────────────────────
 // 우리 차 🚗 — 진행 막대를 끌거나 칩을 누르면 동선을 따라 천천히 달리고, 카메라가 따라간다
 // ─────────────────────────────────────────────────────────────
-function setupCar(ml, el, stops, runs, done, pins) {
+function setupCar(ml, el, stops, runs, done, pins, map) {
+  routeGo = null;
   if (stops.length < 2) return;
   // 1) 경로 한 줄로 잇기 — 기차는 곧은 선, 차는 도로 선. 들르는 곳마다 경로상의 위치를 기억한다
   const byStart = new Map(done.map(({ run, r }) => [run.idx[0], { run, r }]));
@@ -1433,6 +1438,7 @@ function setupCar(ml, el, stops, runs, done, pins) {
     return Math.max(5.5, Math.min(13.5, Math.log2(360 * el.clientWidth / (256 * span * 2.4))));
   };
   const camLoop = () => {
+    if (!el.isConnected) return (camRaf = null);   // 지도가 사라졌으면 멈춘다
     // 가운데는 차에 바짝 붙고(화면 밖으로 안 빠지게), 확대는 느긋하게 바뀐다
     const c = map.getCenter(), z = map.getZoom(), k = .3, kz = .15;
     const nc = [c.lng + (cam.pt[0] - c.lng) * k, c.lat + (cam.pt[1] - c.lat) * k], nz = z + (cam.z - z) * kz;
@@ -1504,7 +1510,8 @@ function setupCar(ml, el, stops, runs, done, pins) {
     const near = Math.round(f * n), arrived = Math.abs(f * n - near) < .05;
     const s = stops[near], nx = stops[i + 1];
     let tag, now;
-    if (f >= 1) { tag = "🏁 도착! 해산~"; now = `🏁 ${s.name} · 수고했어요!`; }
+    if (f >= 1 && s.ic === "🏁") { tag = "🏁 도착! 해산~"; now = `🏁 ${s.name} · 수고했어요!`; }
+    else if (f >= 1) { tag = `${s.ic} 오늘은 여기까지!`; now = `${s.ic} ${s.name} · 오늘 하루 끝 😴`; }   // 하루만 볼 때(첫날은 숙소에서 끝남)
     else if (arrived) { tag = `${s.ic} ${s.name}`; now = `📍 ${near + 1}. ${s.name}${s.time ? ` · ${s.time}` : ""} — ${s.label}`; }
     else { tag = train ? "🚄 칙칙폭폭" : "🚗 부릉부릉"; now = `→ ${i + 2}. ${nx.name}${nx.time ? ` · ${nx.time}` : ""}`; }
     $("#carTag").textContent = tag;
@@ -1534,7 +1541,8 @@ function setupCar(ml, el, stops, runs, done, pins) {
       vibrate();
       const pin = pins[near];
       if (pin) { pin.classList.remove("pulse"); void pin.offsetWidth; pin.classList.add("pulse"); }
-      chips[near].scrollIntoView({ block: "nearest", inline: "center", behavior: "smooth" });
+      const row = chips[near].parentNode;
+      row.scrollTo({ left: chips[near].offsetLeft - row.clientWidth / 2 + chips[near].offsetWidth / 2, behavior: "smooth" });
       chips[near].classList.remove("boing"); void chips[near].offsetWidth; chips[near].classList.add("boing");
       spawn("stop-pop", s.ic, xy.x, xy.y - 60);
       if (near === 0 || s.dayN !== stops[near - 1].dayN) dayBanner(s);
@@ -1552,6 +1560,7 @@ function setupCar(ml, el, stops, runs, done, pins) {
   //    들르는 곳 근처에선 브레이크를 밟듯 느려져서, 여러 칸을 건너뛰어도 장소마다 잠깐씩 머문다
   let cur = 0, goal = 0, driveRaf = null, prevT = 0;
   const drive = t => {
+    if (!el.isConnected) return (driveRaf = null);
     const dt = Math.min(.05, (t - prevT) / 1000 || .016);
     prevT = t;
     const gap = goal - cur;
@@ -1577,6 +1586,7 @@ function setupCar(ml, el, stops, runs, done, pins) {
     if (!driveRaf) { prevT = performance.now(); driveRaf = requestAnimationFrame(drive); }
   };
   const goalIdx = () => Math.round(goal * n);
+  routeGo = go;
 
   // 8) ◀ ▶ 버튼 — 한 번 누를 때마다 한 곳씩(달리는 중에 또 누르면 그 다음 곳으로 이어 달림)
   prevBtn.addEventListener("click", () => { vibrate(); go(goalIdx() - 1); });
@@ -1626,6 +1636,7 @@ function render() {
 }
 
 async function reload() {
+  const routeSig = tab === "route" && map ? JSON.stringify(routeStops()) : null;
   try {
     [items, people, slots, options] = await Promise.all([
       store.list(), store.people().catch(() => people), store.slots().catch(() => slots), store.options().catch(() => options),
@@ -1633,6 +1644,7 @@ async function reload() {
     errMsg = "";
   } catch (e) { fail(e); }
   loaded = true;
+  if (routeSig && map && tab === "route" && routeSig === JSON.stringify(routeStops())) return renderHero();
   render();
 }
 
@@ -1880,6 +1892,7 @@ $("#bugBtn").onclick = () => {
   }, false);
 };
 $("#scrim").onclick = closeSheet;
+addEventListener("keydown", e => { if (e.key === "Escape" && $("#sheet").classList.contains("open")) closeSheet(); });
 
 // 시트 손잡이를 아래로 끌면 닫는다
 (() => {
@@ -1939,6 +1952,7 @@ $("#view").onclick = async e => {
   const tog = e.target.closest("[data-toggle]");
   if (tog) {
     const r = find(tog.dataset.toggle);
+    if (!r) return;
     r.done = !r.done;
     vibrate();
     render();
