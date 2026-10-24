@@ -282,10 +282,9 @@ img.who { display: block; object-fit: cover; background: var(--surface-2); }
 .carpin .car { font-size: 38px; line-height: 1; transition: transform .2s; }
 .car-tag { margin-bottom: 4px; background: var(--text); color: #fff; font-size: 11px; font-weight: 800; padding: 3px 8px;
            border-radius: 99px; white-space: nowrap; max-width: 200px; overflow: hidden; text-overflow: ellipsis; }
-/* 동선 진행 막대 — 지도 위쪽에 떠 있는 유리 카드 */
-.trip-bar { position: absolute; left: 10px; right: 10px; top: 10px; z-index: 2; padding: 10px 14px 12px; border-radius: 16px;
-            background: rgba(255, 255, 255, .9); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
-            box-shadow: 0 6px 20px rgba(0, 0, 0, .16); }
+/* 동선 진행 막대 — 지도 바로 위 카드 */
+.trip-bar { position: relative; margin-bottom: 10px; padding: 12px 14px 12px; border-radius: 16px;
+            background: #fff; border: 1px solid var(--line); box-shadow: 0 4px 14px rgba(0, 0, 0, .07); animation: fade .3s ease; }
 .tb-top { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
 .tb-now { flex: 1; min-width: 0; font-size: 13px; font-weight: 800; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .tb-pct { font-size: 12px; font-weight: 800; color: var(--brand); font-variant-numeric: tabular-nums; }
@@ -1411,11 +1410,9 @@ function setupCar(ml, el, stops, runs, done, pins) {
       <input type="range" min="0" max="1000" value="0" id="tbRange" aria-label="동선 진행"></div>
     <div class="tb-stops" id="tbStops">${stops.map((s, i) => `<button type="button" class="tb-stop" data-go="${i}" style="--c:${color(s)}"
       title="${esc(s.name)}"><span>${s.ic}</span><small>${i + 1}</small></button>`).join("")}</div>`;
-  el.appendChild(bar);
-  // 카드를 만지는 동안 지도가 같이 끌리지 않게
-  ["pointerdown", "touchstart", "mousedown", "wheel", "dblclick"].forEach(t => bar.addEventListener(t, e => e.stopPropagation(), { passive: true }));
-  // 차가 카드 밑에 숨지 않게 지도 가운데를 카드 아래로 내린다
-  map.setPadding({ top: bar.offsetHeight + 16, bottom: 16, left: 0, right: 0 });
+  // 지도 바로 위에 붙인다(지도 안에 띄우면 지도를 가려서 어색함)
+  el.parentNode.querySelectorAll(".trip-bar").forEach(b => b.remove());
+  el.before(bar);
 
   // 5) 카메라 — 끄는 동안 차를 따라가며, 구간 길이에 맞춰 확대(기차는 멀리, 거제 안은 가까이)
   const range = bar.querySelector("#tbRange");
