@@ -300,6 +300,22 @@ img.who { display: block; object-fit: cover; background: var(--surface-2); }
 .tb-track input::-webkit-slider-thumb { -webkit-appearance: none; width: 26px; height: 26px; margin-top: 4px; border-radius: 50%;
   background: #fff; border: 3px solid var(--brand); box-shadow: 0 2px 8px rgba(0, 0, 0, .25); }
 .tb-track input::-moz-range-track { background: transparent; }
+.tb-stops { display: flex; gap: 6px; overflow-x: auto; margin: 12px -14px -2px; padding: 2px 14px 2px; scrollbar-width: none; }
+.tb-stops::-webkit-scrollbar { display: none; }
+.tb-stop { flex: none; position: relative; width: 38px; height: 38px; border-radius: 12px; border: 2px solid transparent; cursor: pointer;
+           background: var(--surface-2); font-size: 18px; display: grid; place-items: center; transition: transform .15s, background .2s, border-color .2s; padding: 0; }
+.tb-stop small { position: absolute; right: -3px; top: -4px; min-width: 16px; height: 16px; border-radius: 99px; background: var(--c); color: #fff;
+                 font-size: 10px; font-weight: 900; display: grid; place-items: center; padding: 0 3px; border: 1.5px solid #fff; }
+.tb-stop.past { opacity: .5; }
+.tb-stop.on { background: #fff; border-color: var(--c); transform: scale(1.12); opacity: 1; box-shadow: 0 4px 12px rgba(0, 0, 0, .15); }
+.tb-stop:active { transform: scale(.92); }
+.carpin.arrive .car-tag { background: var(--brand); animation: tagpop .35s ease; }
+.carpin.arrive .car { animation: hop .45s ease; }
+@keyframes tagpop { 0% { transform: scale(.7); } 60% { transform: scale(1.12); } 100% { transform: scale(1); } }
+@keyframes hop { 0%, 100% { translate: 0 0; } 40% { translate: 0 -10px; } }
+.pin.pulse { animation: pinpulse .9s ease; }
+@keyframes pinpulse { 0% { box-shadow: 0 0 0 0 var(--c); transform: scale(1); } 40% { transform: scale(1.35); }
+                      100% { box-shadow: 0 0 0 16px transparent; transform: scale(1); } }
 .tb-track input::-moz-range-thumb { width: 22px; height: 22px; border-radius: 50%; background: #fff; border: 3px solid var(--brand);
   box-shadow: 0 2px 8px rgba(0, 0, 0, .25); }
 .maplibregl-popup-content { font-family: inherit; font-size: 13px; border-radius: 12px; padding: 10px 12px; }
@@ -1265,7 +1281,10 @@ async function drawRoute() {
   if (!document.body.contains(el)) return;
   el.innerHTML = "";
 
-  const lngs = stops.map(s => s.lng), lats = stops.map(s => s.lat);
+  // 처음 화면은 울산 · 거제에 맞춘다 — 멀리 있는 수도권(기차 출발 · 도착)은 막대를 끌면 찾아간다
+  const local = stops.filter(s => s.lat < 36.3);
+  const fit = local.length > 1 ? local : stops;
+  const lngs = fit.map(s => s.lng), lats = fit.map(s => s.lat);
   map = new ml.Map({
     container: el, style: MAP_STYLE, attributionControl: { compact: true },
     localIdeographFontFamily: "'Pretendard Variable', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif",
@@ -1278,8 +1297,10 @@ async function drawRoute() {
   map.addControl(new ml.NavigationControl({ showCompass: false }), "bottom-right");
 
   // 번호 핀
+  const pins = [];
   stops.forEach((s, i) => {
     const pin = document.createElement("div");
+    pins.push(pin);
     pin.className = "pin";
     pin.style.setProperty("--c", DAY_COLOR[s.dayN] || DAY_COLOR[0]);
     pin.textContent = i + 1;
@@ -1315,14 +1336,14 @@ async function drawRoute() {
                    paint: { "line-color": ["get", "color"], "line-width": 4.5 } });
     $("#routeSum").textContent = `${stops.length}곳 · 🚗 ${Math.round(km)}km · ${fmtMin(min)}`;
     $("#routeList").innerHTML = routeListHtml(stops, legs);
-    setupCar(ml, el, stops, runs, done);
+    setupCar(ml, el, stops, runs, done, pins);
   });
 }
 
 // ─────────────────────────────────────────────────────────────
-// 우리 차 🚗 — 진행 막대를 끌면 동선 위를 따라 움직인다(차를 직접 끌어도 됨)
+// 우리 차 🚗 — 진행 막대를 끌거나 칩을 누르면 동선을 따라 달리고, 카메라가 따라간다(차를 직접 끌어도 됨)
 // ─────────────────────────────────────────────────────────────
-function setupCar(ml, el, stops, runs, done) {
+function setupCar(ml, el, stops, runs, done, pins) {
   if (stops.length < 2) return;
   // 1) 경로 한 줄로 잇기 — 기차는 곧은 선, 차는 도로 선. 들르는 곳마다 경로상의 위치를 기억한다
   const byStart = new Map(done.map(({ run, r }) => [run.idx[0], { run, r }]));
@@ -1370,19 +1391,44 @@ function setupCar(ml, el, stops, runs, done) {
   };
   const fracOfIdx = k => fracOfDist(cum[k]);
 
-  // 4) 진행 막대 — 지도 위쪽에 띄우고, 들르는 곳마다 눈금을 찍는다
+  // 4) 진행 카드 — 지도 위쪽. 막대(들르는 곳마다 눈금) + 들르는 곳 칩(누르면 그곳으로 달려감)
+  const color = s => DAY_COLOR[s.dayN] || DAY_COLOR[0];
   const bar = document.createElement("div");
   bar.className = "trip-bar";
   bar.innerHTML = `<div class="tb-top"><span class="tb-now" id="tbNow">출발!</span><span class="tb-pct" id="tbPct">0%</span></div>
     <div class="tb-track"><div class="tb-fill" id="tbFill"></div>
-      ${stops.map((_, i) => `<i class="tb-tick" style="left:${(i / n * 100).toFixed(2)}%;--c:${DAY_COLOR[stops[i].dayN] || DAY_COLOR[0]}"></i>`).join("")}
-      <input type="range" min="0" max="1000" value="0" id="tbRange" aria-label="동선 진행"></div>`;
+      ${stops.map((s, i) => `<i class="tb-tick" style="left:${(i / n * 100).toFixed(2)}%;--c:${color(s)}"></i>`).join("")}
+      <input type="range" min="0" max="1000" value="0" id="tbRange" aria-label="동선 진행"></div>
+    <div class="tb-stops" id="tbStops">${stops.map((s, i) => `<button type="button" class="tb-stop" data-go="${i}" style="--c:${color(s)}"
+      title="${esc(s.name)}"><span>${s.ic}</span><small>${i + 1}</small></button>`).join("")}</div>`;
   el.appendChild(bar);
-  // 막대를 만지는 동안 지도가 같이 끌리지 않게
-  ["pointerdown", "touchstart", "mousedown", "wheel"].forEach(t => bar.addEventListener(t, e => e.stopPropagation(), { passive: true }));
+  // 카드를 만지는 동안 지도가 같이 끌리지 않게
+  ["pointerdown", "touchstart", "mousedown", "wheel", "dblclick"].forEach(t => bar.addEventListener(t, e => e.stopPropagation(), { passive: true }));
+  // 차가 카드 밑에 숨지 않게 지도 가운데를 카드 아래로 내린다
+  map.setPadding({ top: bar.offsetHeight + 16, bottom: 16, left: 0, right: 0 });
 
-  // 5) 비율 → 경로 위 위치(꼭짓점 사이는 보간) + 다음 들를 곳 표시 + 방향 따라 차 뒤집기
+  // 5) 카메라 — 끄는 동안 차를 따라가며, 구간 길이에 맞춰 확대(기차는 멀리, 거제 안은 가까이)
   const range = bar.querySelector("#tbRange");
+  const chips = [...bar.querySelectorAll(".tb-stop")];
+  const carEl = car.querySelector(".car");
+  const cam = { pt: path[0], z: map.getZoom() };
+  let follow = false, camRaf = null;
+  const zoomFor = i => {
+    const a = stops[Math.max(0, Math.min(n, i))], b = stops[Math.max(0, Math.min(n, i + 1))];
+    const span = Math.max(Math.abs(a.lng - b.lng) * cos, Math.abs(a.lat - b.lat), .012);
+    return Math.max(5.5, Math.min(13.5, Math.log2(360 * el.clientWidth / (256 * span * 2.4))));
+  };
+  const camLoop = () => {
+    const c = map.getCenter(), z = map.getZoom(), k = .2;
+    const nc = [c.lng + (cam.pt[0] - c.lng) * k, c.lat + (cam.pt[1] - c.lat) * k], nz = z + (cam.z - z) * k;
+    map.jumpTo({ center: nc, zoom: nz });
+    const settled = Math.abs(nz - cam.z) < .01 && Math.hypot(nc[0] - cam.pt[0], nc[1] - cam.pt[1]) < 1e-5;
+    camRaf = follow || !settled ? requestAnimationFrame(camLoop) : null;
+  };
+  const kick = () => { if (!camRaf) camRaf = requestAnimationFrame(camLoop); };
+
+  // 6) 비율 → 경로 위 위치(꼭짓점 사이는 보간) · 기차 구간은 🚄 · 들르는 곳에 닿으면 도착 표시 + 핀 반짝
+  let lastStop = -1, cheered = false;
   const place = f => {
     f = Math.max(0, Math.min(1, f));
     const i = Math.min(n - 1, Math.floor(f * n));
@@ -1392,24 +1438,70 @@ function setupCar(ml, el, stops, runs, done) {
     const seg = cum[k] - cum[k - 1] || 1, t = Math.max(0, Math.min(1, (d - cum[k - 1]) / seg));
     const a = path[k - 1], b = path[k] || a;
     const pt = [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t];
-    if (b[0] !== a[0]) car.querySelector(".car").style.transform = b[0] > a[0] ? "scaleX(-1)" : "none";
     marker.setLngLat(pt);
-    const nx = stopAt.findIndex((p, i) => i > 0 && cum[p] >= d - 1e-9);
-    const label = f >= 1 ? "🏁 도착! 해산~" : nx > 0 ? `→ ${nx + 1}. ${stops[nx].name}` : "출발!";
-    $("#carTag").textContent = label;
-    $("#tbNow").textContent = nx > 0 && f < 1 && stops[nx].time ? `${label} · ${stops[nx].time}` : label;
+
+    const train = stops[i + 1].via === "train";
+    carEl.textContent = train ? "🚄" : "🚗";
+    carEl.style.transform = !train && b[0] !== a[0] && b[0] > a[0] ? "scaleX(-1)" : "none";
+
+    const near = Math.round(f * n), arrived = Math.abs(f * n - near) < .05;
+    const s = stops[near], nx = stops[i + 1];
+    let tag, now;
+    if (f >= 1) { tag = "🏁 도착! 해산~"; now = `🏁 ${s.name} · 수고했어요!`; }
+    else if (arrived) { tag = `${s.ic} ${s.name}`; now = `📍 ${near + 1}. ${s.name}${s.time ? ` · ${s.time}` : ""} — ${s.label}`; }
+    else { tag = train ? "🚄 칙칙폭폭" : "🚗 부릉부릉"; now = `→ ${i + 2}. ${nx.name}${nx.time ? ` · ${nx.time}` : ""}`; }
+    $("#carTag").textContent = tag;
+    $("#tbNow").textContent = now;
+    car.classList.toggle("arrive", arrived || f >= 1);
     $("#tbPct").textContent = `${Math.round(f * 100)}%`;
     $("#tbFill").style.width = `${f * 100}%`;
     range.value = Math.round(f * 1000);
-    return pt;
+
+    // 들르는 곳에 처음 닿을 때 — 진동 · 핀 반짝 · 칩 표시(끝까지 가면 폭죽)
+    const active = arrived ? near : i + 1;
+    chips.forEach((c, j) => { c.classList.toggle("on", j === active); c.classList.toggle("past", j < active); });
+    if (arrived && near !== lastStop) {
+      lastStop = near;
+      vibrate();
+      const pin = pins[near];
+      if (pin) { pin.classList.remove("pulse"); void pin.offsetWidth; pin.classList.add("pulse"); }
+      chips[near].scrollIntoView({ block: "nearest", inline: "center", behavior: "smooth" });
+    }
+    if (!arrived) lastStop = -1;
+    if (f >= 1 && !cheered) { cheered = true; fx.burst(innerWidth / 2, innerHeight * .4, 70); }
+    if (f < .97) cheered = false;
+
+    cam.pt = pt;
+    cam.z = zoomFor(arrived ? Math.min(near, n - 1) : i) + (arrived ? .4 : 0);
+    if (follow) kick();
   };
-  range.addEventListener("input", () => place(range.value / 1000));
-  range.addEventListener("change", () => {
-    vibrate();
-    const pt = marker.getLngLat();
-    if (!map.getBounds().contains(pt)) map.easeTo({ center: pt, duration: 500 });
+
+  // 7) 막대 끌기 — 끄는 동안 카메라가 따라간다
+  const start = () => { follow = true; cancelAnimationFrame(goRaf); kick(); };
+  const stop = () => { follow = false; kick(); };
+  range.addEventListener("pointerdown", start);
+  range.addEventListener("touchstart", start, { passive: true });
+  range.addEventListener("input", () => { if (!follow) start(); place(range.value / 1000); });
+  ["pointerup", "touchend", "change"].forEach(t => range.addEventListener(t, stop));
+
+  // 8) 칩 누르기 — 지금 자리에서 그곳까지 부드럽게 달려간다
+  let goRaf = 0;
+  bar.querySelector("#tbStops").addEventListener("click", e => {
+    const c = e.target.closest("[data-go]");
+    if (!c) return;
+    cancelAnimationFrame(goRaf);
+    const from = range.value / 1000, to = +c.dataset.go / n, t0 = performance.now();
+    const dur = 450 + Math.min(1400, Math.abs(to - from) * n * 260);
+    follow = true; kick();
+    const step = t => {
+      const p = Math.min(1, (t - t0) / dur), e2 = p < .5 ? 2 * p * p : 1 - (-2 * p + 2) ** 2 / 2;
+      place(from + (to - from) * e2);
+      if (p < 1) goRaf = requestAnimationFrame(step); else stop();
+    };
+    goRaf = requestAnimationFrame(step);
   });
-  // 차를 직접 끌어도 막대가 따라온다
+
+  // 차를 직접 끌어도 막대가 따라온다(카메라는 그대로)
   marker.on("drag", () => { const ll = marker.getLngLat(); place(fracOfIdx(nearestIdx(path, [ll.lng, ll.lat]))); });
   marker.on("dragend", () => { place(range.value / 1000); vibrate(); });
   place(0);
