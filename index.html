@@ -288,16 +288,22 @@ img.who { display: block; object-fit: cover; background: var(--surface-2); }
 .tb-top { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
 .tb-now { flex: 1; min-width: 0; font-size: 13px; font-weight: 800; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .tb-pct { font-size: 12px; font-weight: 800; color: var(--brand); font-variant-numeric: tabular-nums; }
+/* 좌우 버튼 + 가운데 막대(🚗가 막대 위를 달림) */
+.tb-ctl { display: flex; align-items: center; gap: 12px; }
+.tb-btn { flex: none; width: 44px; height: 44px; border-radius: 50%; border: 0; padding: 0; cursor: pointer; display: grid; place-items: center;
+          background: var(--surface-2); color: var(--text); transition: transform .12s, opacity .2s, box-shadow .2s; }
+.tb-btn svg { width: 22px; height: 22px; }
+.tb-btn.next { background: linear-gradient(135deg, var(--brand), var(--brand-2)); color: #fff; box-shadow: 0 4px 12px rgba(14, 143, 143, .35); }
+.tb-btn:active { transform: scale(.88); }
+.tb-btn:disabled { opacity: .3; cursor: default; transform: none; box-shadow: none; }
+.tb-btn.next:not(:disabled) { animation: nudge 1.8s ease-in-out infinite; }
+@keyframes nudge { 0%, 70%, 100% { translate: 0 0; } 80% { translate: 3px 0; } 90% { translate: -1px 0; } }
+.tb-ctl .tb-track { flex: 1; }
+.tb-car { position: absolute; top: 50%; font-size: 20px; line-height: 1; translate: -50% -62%; pointer-events: none; z-index: 1; }
 .tb-track { position: relative; height: 10px; border-radius: 99px; background: var(--surface-2); }
 .tb-fill { position: absolute; left: 0; top: 0; bottom: 0; border-radius: 99px; background: linear-gradient(90deg, var(--brand), var(--brand-2)); }
 .tb-tick { position: absolute; top: 50%; width: 8px; height: 8px; margin: -4px 0 0 -4px; border-radius: 50%; background: #fff;
            border: 2px solid var(--c); box-sizing: border-box; pointer-events: none; }
-.tb-track input { position: absolute; left: -12px; right: -12px; top: -12px; width: calc(100% + 24px); height: 34px; margin: 0;
-                  background: transparent; -webkit-appearance: none; appearance: none; cursor: pointer; touch-action: none; }
-.tb-track input::-webkit-slider-runnable-track { height: 34px; background: transparent; }
-.tb-track input::-webkit-slider-thumb { -webkit-appearance: none; width: 26px; height: 26px; margin-top: 4px; border-radius: 50%;
-  background: #fff; border: 3px solid var(--brand); box-shadow: 0 2px 8px rgba(0, 0, 0, .25); }
-.tb-track input::-moz-range-track { background: transparent; }
 .tb-stops { display: flex; gap: 6px; overflow-x: auto; margin: 12px -14px -2px; padding: 2px 14px 2px; scrollbar-width: none; }
 .tb-stops::-webkit-scrollbar { display: none; }
 .tb-stop { flex: none; position: relative; width: 38px; height: 38px; border-radius: 12px; border: 2px solid transparent; cursor: pointer;
@@ -333,8 +339,6 @@ img.who { display: block; object-fit: cover; background: var(--surface-2); }
 .pin.pulse { animation: pinpulse .9s ease; }
 @keyframes pinpulse { 0% { box-shadow: 0 0 0 0 var(--c); transform: scale(1); } 40% { transform: scale(1.35); }
                       100% { box-shadow: 0 0 0 16px transparent; transform: scale(1); } }
-.tb-track input::-moz-range-thumb { width: 22px; height: 22px; border-radius: 50%; background: #fff; border: 3px solid var(--brand);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, .25); }
 .maplibregl-popup-content { font-family: inherit; font-size: 13px; border-radius: 12px; padding: 10px 12px; }
 .route-list { padding: 6px 0; overflow: hidden; }
 .route-day { font-size: 12px; font-weight: 800; color: var(--muted); padding: 12px 16px 6px; letter-spacing: .02em; }
@@ -1400,14 +1404,19 @@ function setupCar(ml, el, stops, runs, done, pins) {
   const n = stops.length - 1;
   const at = i => cum[stopAt[Math.max(0, Math.min(n, i))]];
 
-  // 4) 진행 카드 — 지도 위쪽. 막대(들르는 곳마다 눈금) + 들르는 곳 칩(누르면 그곳으로 달려감)
+  // 4) 진행 카드 — 지도 위쪽. ◀ 이전 / 막대(들르는 곳마다 눈금, 🚗가 위를 달림) / 다음 ▶ + 들르는 곳 칩(누르면 그곳으로 달려감)
   const color = s => DAY_COLOR[s.dayN] || DAY_COLOR[0];
+  const arrow = d => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="${d}"/></svg>`;
   const bar = document.createElement("div");
   bar.className = "trip-bar";
   bar.innerHTML = `<div class="tb-top"><span class="tb-now" id="tbNow">출발!</span><span class="tb-pct" id="tbPct">0%</span></div>
-    <div class="tb-track"><div class="tb-fill" id="tbFill"></div>
-      ${stops.map((s, i) => `<i class="tb-tick" style="left:${(i / n * 100).toFixed(2)}%;--c:${color(s)}"></i>`).join("")}
-      <input type="range" min="0" max="1000" value="0" id="tbRange" aria-label="동선 진행"></div>
+    <div class="tb-ctl">
+      <button type="button" class="tb-btn prev" id="tbPrev" aria-label="이전 장소">${arrow("M15 5l-7 7 7 7")}</button>
+      <div class="tb-track"><div class="tb-fill" id="tbFill"></div>
+        ${stops.map((s, i) => `<i class="tb-tick" style="left:${(i / n * 100).toFixed(2)}%;--c:${color(s)}"></i>`).join("")}
+        <span class="tb-car" id="tbCar">🚗</span></div>
+      <button type="button" class="tb-btn next" id="tbNext" aria-label="다음 장소">${arrow("M9 5l7 7-7 7")}</button>
+    </div>
     <div class="tb-stops" id="tbStops">${stops.map((s, i) => `<button type="button" class="tb-stop" data-go="${i}" style="--c:${color(s)}"
       title="${esc(s.name)}"><span>${s.ic}</span><small>${i + 1}</small></button>`).join("")}</div>`;
   // 지도 바로 위에 붙인다(지도 안에 띄우면 지도를 가려서 어색함)
@@ -1415,7 +1424,7 @@ function setupCar(ml, el, stops, runs, done, pins) {
   el.before(bar);
 
   // 5) 카메라 — 끄는 동안 차를 따라가며, 구간 길이에 맞춰 확대(기차는 멀리, 거제 안은 가까이)
-  const range = bar.querySelector("#tbRange");
+  const prevBtn = bar.querySelector("#tbPrev"), nextBtn = bar.querySelector("#tbNext"), tbCar = bar.querySelector("#tbCar");
   const chips = [...bar.querySelectorAll(".tb-stop")];
   const carEl = car.querySelector(".car");
   const cam = { pt: path[0], z: map.getZoom() };
@@ -1426,8 +1435,9 @@ function setupCar(ml, el, stops, runs, done, pins) {
     return Math.max(5.5, Math.min(13.5, Math.log2(360 * el.clientWidth / (256 * span * 2.4))));
   };
   const camLoop = () => {
-    const c = map.getCenter(), z = map.getZoom(), k = .12;
-    const nc = [c.lng + (cam.pt[0] - c.lng) * k, c.lat + (cam.pt[1] - c.lat) * k], nz = z + (cam.z - z) * k;
+    // 가운데는 차에 바짝 붙고(화면 밖으로 안 빠지게), 확대는 느긋하게 바뀐다
+    const c = map.getCenter(), z = map.getZoom(), k = .3, kz = .08;
+    const nc = [c.lng + (cam.pt[0] - c.lng) * k, c.lat + (cam.pt[1] - c.lat) * k], nz = z + (cam.z - z) * kz;
     map.jumpTo({ center: nc, zoom: nz });
     const settled = Math.abs(nz - cam.z) < .01 && Math.hypot(nc[0] - cam.pt[0], nc[1] - cam.pt[1]) < 1e-5;
     camRaf = follow || !settled ? requestAnimationFrame(camLoop) : null;
@@ -1497,6 +1507,9 @@ function setupCar(ml, el, stops, runs, done, pins) {
     car.classList.toggle("train", train && !arrived);
     $("#tbPct").textContent = `${Math.round(f * 100)}%`;
     $("#tbFill").style.width = `${f * 100}%`;
+    tbCar.style.left = `${f * 100}%`;
+    tbCar.textContent = train ? "🚄" : "🚗";
+    tbCar.style.transform = !train && goal >= cur ? "scaleX(-1)" : "none";   // 🚗는 왼쪽을 보고 있다 — 앞으로 갈 땐 뒤집기
 
     // 달리는 동안 배기 연기
     const xy = map.project(pt), ts = performance.now();
@@ -1530,9 +1543,9 @@ function setupCar(ml, el, stops, runs, done, pins) {
     if (follow) kick();
   };
 
-  // 7) 운전 — 막대 손잡이는 목표, 차는 그 목표를 천천히 쫓아간다.
-  //    들르는 곳 근처에선 브레이크를 밟듯 느려져서, 빨리 끌어도 장소마다 잠깐씩 머문다
-  let cur = 0, goal = 0, dragging = false, driveRaf = null, prevT = 0;
+  // 7) 운전 — 버튼/칩은 목표만 정하고, 차는 그 목표를 천천히 쫓아간다.
+  //    들르는 곳 근처에선 브레이크를 밟듯 느려져서, 여러 칸을 건너뛰어도 장소마다 잠깐씩 머문다
+  let cur = 0, goal = 0, driveRaf = null, prevT = 0;
   const drive = t => {
     const dt = Math.min(.05, (t - prevT) / 1000 || .016);
     prevT = t;
@@ -1540,7 +1553,7 @@ function setupCar(ml, el, stops, runs, done, pins) {
     if (Math.abs(gap) < 1e-4) {
       cur = goal; place(cur);
       driveRaf = null;
-      if (!dragging) { follow = false; kick(); }
+      follow = false; kick();
       return;
     }
     const off = Math.abs(cur * n - Math.round(cur * n));           // 0(장소 위) ~ .5(구간 한가운데)
@@ -1549,27 +1562,36 @@ function setupCar(ml, el, stops, runs, done, pins) {
     place(cur);
     driveRaf = requestAnimationFrame(drive);
   };
-  const go = f => {
-    goal = Math.max(0, Math.min(1, f));
+  // 목표 장소 번호로 출발 — 버튼 상태(처음이면 ◀ 끔, 끝이면 ▶ 끔)도 같이 맞춘다
+  const go = idx => {
+    idx = Math.max(0, Math.min(n, idx));
+    goal = idx / n;
+    prevBtn.disabled = idx === 0;
+    nextBtn.disabled = idx === n;
     follow = true; kick();
     if (!driveRaf) { prevT = performance.now(); driveRaf = requestAnimationFrame(drive); }
   };
+  const goalIdx = () => Math.round(goal * n);
 
-  // 막대 끌기 — 손잡이를 놓아도 차는 목표까지 마저 달린다
-  const start = () => { dragging = true; follow = true; kick(); };
-  const stop = () => { dragging = false; if (!driveRaf) { follow = false; kick(); } };
-  range.addEventListener("pointerdown", start);
-  range.addEventListener("touchstart", start, { passive: true });
-  range.addEventListener("input", () => go(range.value / 1000));
-  ["pointerup", "touchend", "change"].forEach(t => range.addEventListener(t, stop));
+  // 8) ◀ ▶ 버튼 — 한 번 누를 때마다 한 곳씩(달리는 중에 또 누르면 그 다음 곳으로 이어 달림)
+  prevBtn.addEventListener("click", () => { vibrate(); go(goalIdx() - 1); });
+  nextBtn.addEventListener("click", () => { vibrate(); go(goalIdx() + 1); });
+  prevBtn.disabled = true;
 
-  // 8) 칩 누르기 — 손잡이를 그곳으로 옮기고 차가 달려간다
+  // 칩 누르기 — 그곳으로 달려간다
   bar.querySelector("#tbStops").addEventListener("click", e => {
     const c = e.target.closest("[data-go]");
-    if (!c) return;
-    range.value = Math.round(+c.dataset.go / n * 1000);
-    go(+c.dataset.go / n);
+    if (c) go(+c.dataset.go);
   });
+
+  // 키보드 ← → 도 같은 동작(동선 화면이 떠 있을 때만)
+  const onKey = e => {
+    if (!document.body.contains(bar)) return removeEventListener("keydown", onKey);
+    if (e.target.closest && e.target.closest("input, textarea, select")) return;
+    if (e.key === "ArrowRight") go(goalIdx() + 1);
+    else if (e.key === "ArrowLeft") go(goalIdx() - 1);
+  };
+  addEventListener("keydown", onKey);
 
   place(0);
 }
