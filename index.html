@@ -76,7 +76,7 @@ a { color: inherit; text-decoration: none; }
 /* ─────────────────────────────────────────────────────────────
    본문 공통
    ───────────────────────────────────────────────────────────── */
-main { max-width: 640px; margin: -26px auto 0; padding: 0 16px calc(120px + var(--safe-b)); position: relative; z-index: 1; }
+main { max-width: 640px; margin: -26px auto 0; padding: 0 16px calc(170px + var(--safe-b)); position: relative; z-index: 1; }
 .sec-h { display: flex; align-items: baseline; justify-content: space-between; margin: 6px 4px 12px; }
 .sec-h h2 { margin: 0; font-size: 22px; font-weight: 800; letter-spacing: -0.03em; }
 .sec-h .meta { color: var(--muted); font-size: 14px; }
@@ -1712,6 +1712,12 @@ function openSheet(kind, row) {
     } catch (e) { fail(e); }
     reload();
   }, !row);
+  // 새 일정은 날짜를 여행 첫날(여행 중이면 오늘)로 채워 둔다
+  if (kind === "schedule" && !row) {
+    const days = [...new Set(byKind("schedule").map(r => r.day).filter(Boolean))].sort();
+    const today = new Date().toLocaleDateString("sv-SE");
+    if (days.length) $("#f_day").value = days.includes(today) ? today : days[0];
+  }
   if (row) $("#sDel").onclick = async () => {
     if (!confirm(`«${row.title}» 을(를) 지울까요?`)) return;
     closeSheet();
@@ -1740,15 +1746,27 @@ function openPanel(html, onSubmit, focusFirst) {
   document.body.classList.add("lock-scroll");
   $("#scrim").classList.add("open");
   requestAnimationFrame(() => sheet.classList.add("open"));
+  // 폰의 뒤로 가기가 페이지를 떠나지 않고 시트만 닫도록 기록 한 칸을 넣는다
+  if (!sheetEntry) {
+    try { history.pushState({ sheet: true }, ""); sheetEntry = true; } catch (e) {}
+  }
   if (focusFirst) setTimeout(() => sheet.querySelector("input:not([type=hidden]), textarea")?.focus(), 320);
 }
 
-function closeSheet() {
+let sheetEntry = false;   // 시트를 열 때 넣은 history 칸이 남아 있는지
+
+// viaBack 이 true 면 뒤로 가기로 닫는 것 — 이미 칸이 빠졌으니 history 를 건드리지 않는다
+function closeSheet(viaBack) {
   $("#sheet").classList.remove("open");
   $("#scrim").classList.remove("open");
   document.body.classList.remove("lock-scroll");
   document.activeElement?.blur?.();
+  if (sheetEntry) {
+    sheetEntry = false;
+    if (viaBack !== true) history.back();
+  }
 }
+addEventListener("popstate", () => { if (sheetEntry) closeSheet(true); });
 
 // ─────────────────────────────────────────────────────────────
 // 폭죽 · 풍선 — 캔버스 조각 + 떠오르는 이모지
@@ -1891,7 +1909,7 @@ $("#bugBtn").onclick = () => {
     } catch (e) { fail(e); }
   }, false);
 };
-$("#scrim").onclick = closeSheet;
+$("#scrim").onclick = () => closeSheet();
 addEventListener("keydown", e => { if (e.key === "Escape" && $("#sheet").classList.contains("open")) closeSheet(); });
 
 // 시트 손잡이를 아래로 끌면 닫는다
