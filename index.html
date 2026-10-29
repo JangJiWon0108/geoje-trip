@@ -197,6 +197,18 @@ main { max-width: 640px; margin: -26px auto 0; padding: 0 16px calc(170px + var(
 .opt-act .icon-btn { margin-left: auto; width: 32px; height: 32px; }
 .add-opt { width: 100%; border: 2px dashed var(--line); background: transparent; border-radius: 16px; padding: 13px;
            font-weight: 700; color: var(--brand); cursor: pointer; }
+.opt.pk { align-items: flex-start; }
+.pk-chk { flex: none; width: 24px; height: 24px; margin-top: 2px; accent-color: var(--brand); }
+.pk-chips { margin-bottom: 4px; }
+.pk-tools { display: flex; gap: 8px; margin: 0 0 10px; }
+.pk-tools .chip { padding: 6px 12px; font-size: 13px; }
+.pk-bar { position: sticky; bottom: 0; z-index: 2; background: var(--surface); border-top: 1px solid var(--line);
+          margin-top: 8px; padding: 6px 0 calc(8px + var(--safe-b)); }
+.pk-sum { font-size: 13px; color: var(--muted); margin: 4px 2px 8px; }
+.pk-bar .actions { margin: 0; }
+.bdg.tier-a { background: rgba(234, 179, 8, .20); color: #946200; }
+.bdg.tier-b { background: rgba(100, 116, 139, .16); color: #475569; }
+.bdg.tier-c { background: rgba(180, 120, 70, .14); color: #8a5a2b; }
 .tl-card b { font-size: 16px; display: block; }
 .tl-card p { margin: 3px 0 0; color: var(--muted); font-size: 14px; white-space: pre-wrap; word-break: break-word; }
 
@@ -685,7 +697,7 @@ const store = {
   async places(categories) {
     if (!remote) return [];
     const { data, error } = await client.from("trip_places")
-      .select("id,name,category,area,menu,memo,badge,source_url,photo_url,lat,lng").in("category", categories).order("name");
+      .select("*").in("category", categories).order("name");
     if (error) throw error;
     return data;
   },
@@ -980,7 +992,7 @@ function openSlot(s) {
         ${o.memo ? `<div class="opt-m">${esc(o.memo)}</div>` : ""}
         <div class="opt-act">${mapLinks(o)}<button type="button" class="icon-btn" data-optdel="${o.id}" aria-label="후보 빼기">✕</button></div>
       </div></div>`).join("") || `<div class="empty">아직 후보가 없어요</div>`}</div>
-    <button type="button" class="add-opt" id="addOpt">+ 후보 추가</button>
+    <button type="button" class="add-opt" id="addOpt">후보 전체 보기 · 체크로 추가</button>
     <div class="actions">${s.chosen_id ? `<button type="button" class="btn soft" id="unpick">선택 취소</button>` : ""}
       <button type="button" class="btn primary" id="sCancel">닫기</button></div>`;
   openPanel(html, () => {}, false);
@@ -1021,49 +1033,95 @@ function openSlot(s) {
   };
 }
 
-// 후보 추가 — 그 카테고리의 장소 DB 전체에서 고른다(이미 후보인 곳은 빼고 보여 준다)
+// 후보 전체 보기 — 그 칸 카테고리의 장소 전체를 보여 주고, 체크로 후보에 넣거나 뺀다
 const SLOT_CAT = { meal: ["맛집", "해장"], cafe: ["카페"], spot: ["놀거리"], shop: ["마트"] };
 const shortDay = d => { const t = new Date(d + "T00:00:00"); return `${t.getMonth() + 1}/${t.getDate()}`; };
 const isDup = e => e && (e.code === "23505" || /duplicate|unique/i.test(e.message || ""));
+const TIER_TAG = { A: "🥇 A급", B: "🥈 B급", C: "🥉 C급" };
+const TIER_MAP = {"거제씨월드":"A","스카이라인 루지 통영":"A","거제 파노라마 케이블카":"A","외도 보타니아":"A","거제식물원":"A","매미성":"A","바람의 언덕":"A","거제 포로수용소 유적공원":"B","학동흑진주몽돌해변":"A","신선대":"B","해금강":"B","거제고현시장":"B","구조라성":"C","거제조선해양문화관":"C","근포마을 땅굴":"C","옥포대첩기념공원":"C","구조라해수욕장":"C","예이제해물듬뿍칼국수 게장":"A","대박난맛집 거제 학동점":"A","충남식당":"A","충무할매김밥 학동점":"A","배말칼국수김밥 거제학동점":"A","장수굴국밥":"A","항만식당":"B","부일식당":"A","나는돼지국밥":"B","황금고디탕":"B","본가국밥":"B","가마솥국밥":"C","피란":"C","사천돼지국밥":"C","성내곰탕":"C","큰맘할매순대국 거제학동몽돌점":"C","더꽃 본점":"A","팔각도":"A","어방가":"A","용화횟집":"A","하누화로":"A","집밥 청보리":"A","항아리 해물칼국수":"A","학동 1박2일맛있는집":"A","성포끝집":"A","청마루대구뽈찜":"A","바다맛선장집 학동몽돌점":"A","숨 지세포소노캄본점":"A","구조라 구이조아라":"A","초청명가횟집":"A","유경식당 소노캄 지세포 씨월드":"A","거제멸치쌈밥":"A","박정현게장백반":"A","삼삼해물식당":"A","수월애 쭈꾸미":"A","백만석":"B","거제도굴구이":"B","태백집":"B","폴리스낙지":"B","중앙식육식당":"B","청기와횟집":"B","물레방아한정식":"B","바다가는길 게장정식":"B","고풍쌈밥":"B","몽그레식당 학동몽돌본점":"B","청춘짬뽕":"B","아라가야냉면  거제학동점":"B","진짜우리순대":"B","영순이 막창":"B","양지바위횟집":"B","해송횟집":"B","막썰어횟집":"B","원조거제굴구이":"B","대운분식":"C","오미자가든":"C","송월학횟집":"C","평화횟집":"C","거제우동":"C","명승횟집":"C","와현 어가횟집":"C","남파랑21":"C","꼬김빱 윤이네 거제와현점":"C","진이네식당":"C","싱싱게장":"C","와현횟집":"C","선부맛집":"C","평사리":"C","등대횟집":"C","미씨족발 수월점":"C","짹짹커피 거제도본점":"A","마틴커피":"A","온더선셋":"A","그루브인":"A","외도널서리":"A","오송웨이브":"A","엄마의 바다":"B","씨야드":"B","W181":"B","볼리에르":"B","카페 포뷰":"A","디스커버리카페":"B","에버 어뮤즈":"B","베토벤":"A","슈만과 클라라":"C","스테이캄":"C","와플스튜디오":"C","윈드밀테라스":"C","르솔레이 풀빌라":"A","롯데마트 거제점":"A","장승포농협 하나로마트 옥수점":"B","하나로마트 거제해금강농협본점":"C"};   // 리뷰 수 · 별점으로 매긴 등급, 주신 곳은 A
+const tierOf = p => p.tier || TIER_MAP[p.name] || (p.badge === "블루리본" || p.badge === "주신 곳" || p.source === "주신 곳" ? "A" : "C");   // 새로 생긴 장소는 배지로 가른다
 
 async function openPicker(s) {
   const cats = SLOT_CAT[s.kind] || ["맛집"], cat = cats.join(" · "), ic = slotIcon(s);
   const morning = /아침|아점/.test(s.title);   // 아침 · 아점은 해장 먼저
   let all;
   try { all = await store.places(cats); } catch (e) { return fail(e); }
-  const have = new Set(optionsOf(s.id).map(o => o.title));
-  const rank = p => (p.badge === "주신 곳" ? 0 : 3) + (morning && p.category === "해장" ? 0 : morning ? 6 : 0)
-                 + (p.badge === "블루리본" ? 0 : 1) + (!morning && p.category === "해장" ? 2 : 0);
-  const list = all.filter(p => !have.has(p.name)).sort((a, b) => rank(a) - rank(b) || a.name.localeCompare(b.name, "ko"));
-  const rows = q => list.filter(p => !q || [p.name, p.area, p.menu, p.memo].join(" ").includes(q)).map(p => {
+  const cur = new Map(optionsOf(s.id).map(o => [o.title, o]));       // 지금 후보
+  const chosen = (chosenOf(s) || {}).title;                           // 지금 고른 곳은 체크를 풀 수 없다
+  const picked = new Set(cur.keys());
+  const ord = { A: 0, B: 1, C: 2 };
+  const rank = p => (ord[tierOf(p)] ?? 3) * 10 + (p.category === "해장" ? (morning ? 0 : 5) : (morning ? 5 : 0)) + (p.badge === "블루리본" ? 0 : 1);
+  all.sort((a, b) => rank(a) - rank(b) || a.name.localeCompare(b.name, "ko"));
+  const manual = [...cur.values()].filter(o => !all.some(p => p.name === o.title));   // 장소 DB에 없는 직접 입력 후보
+  const tiers = ["A", "B", "C"].filter(t => all.some(p => tierOf(p) === t));
+  let filt = "전체", q = "";
+
+  const visible = () => all.filter(p => (filt === "전체" || (filt === "후보" ? picked.has(p.name) : tierOf(p) === filt))
+    && (!q || [p.name, p.area, p.menu, p.memo].join(" ").includes(q)));
+  const diff = () => ({ add: all.filter(p => picked.has(p.name) && !cur.has(p.name)),
+                        del: [...cur.values()].filter(o => !picked.has(o.title) && o.title !== chosen) });
+  const rowHTML = p => {
     const o = { title: p.name, area: p.area, url: p.source_url, photo_url: p.photo_url };
-    return `<div class="opt" data-place="${p.id}">
+    const on = picked.has(p.name), lock = p.name === chosen;
+    return `<label class="opt pk${on ? " on" : ""}" data-place="${p.id}">
+      <input type="checkbox" class="pk-chk" ${on ? "checked" : ""} ${lock ? "disabled" : ""} aria-label="${esc(p.name)} 후보">
       <div class="opt-thumb">${thumb(o, "sq", ic)}</div>
-      <div class="opt-main"><div class="opt-t">${esc(p.name)}${badge(p.badge)}${p.category === "해장" ? `<span class="bdg season">🍲 해장</span>` : ""}</div>
+      <div class="opt-main"><div class="opt-t">${esc(p.name)}${badge(p.badge)}${p.category === "해장" ? `<span class="bdg season">🍲 해장</span>` : ""}<span class="bdg tier-${tierOf(p).toLowerCase()}">${TIER_TAG[tierOf(p)] || ""}</span></div>
         ${p.area || p.menu ? `<div class="opt-s">${esc([p.area, p.menu].filter(Boolean).join(" · "))}</div>` : ""}
         ${p.memo ? `<div class="opt-m">${esc(p.memo)}</div>` : ""}
-        <div class="opt-act">${mapLinks(o)}<span class="swap">+ 넣기</span></div></div></div>`;
-  }).join("") || `<div class="empty">더 넣을 ${cat}이(가) 없어요 — 직접 입력해 주세요</div>`;
+        <div class="opt-act">${mapLinks(o)}${lock ? `<span class="bdg mine">지금 고른 곳</span>` : ""}</div></div></label>`;
+  };
+  const chipHTML = () => ["전체", "후보", ...tiers].map(f => {
+    const n = f === "전체" ? all.length : f === "후보" ? picked.size : all.filter(p => tierOf(p) === f).length;
+    return `<button type="button" class="chip${f === filt ? " on" : ""}" data-filt="${f}">${f === "전체" || f === "후보" ? f : TIER_TAG[f]}<span class="n">${n}</span></button>`;
+  }).join("");
+  const sumText = () => { const d = diff(); return `${cat} ${all.length}곳 중 후보 ${picked.size}곳${manual.length ? ` · 직접 넣은 ${manual.length}곳은 그대로` : ""}${d.add.length || d.del.length ? ` · 바뀐 것 +${d.add.length} −${d.del.length}` : ""}`; };
 
-  openPanel(`<div class="handle"></div><h3>${ic} ${esc(s.title)} 후보 추가</h3>
-    <p class="sheet-sub">${cat} ${list.length}곳 · 이미 후보인 곳은 빠져 있어요</p>
+  openPanel(`<div class="handle"></div><h3>${ic} ${esc(s.title)} 후보 전체 보기</h3>
+    <p class="sheet-sub">체크하면 후보에 들어가고, 풀면 빠져요</p>
     <div class="field"><input id="pk_q" placeholder="이름 · 지역 · 메뉴 검색" autocomplete="off"></div>
-    <div class="opts" id="pk_list">${rows("")}</div>
-    <div class="actions"><button type="button" class="btn soft" id="pkBack">← 후보 목록</button>
-      <button type="button" class="btn primary" id="pkManual">직접 입력</button></div>`, () => {}, false);
-  $("#pk_q").oninput = e => { $("#pk_list").innerHTML = rows(e.target.value.trim()); };
-  $("#sheet").onclick = async e => {
-    if (e.target.closest("[data-stop]")) return;
+    <div class="chips pk-chips" id="pk_chips">${chipHTML()}</div>
+    <div class="pk-tools"><button type="button" class="chip" id="pkAll">보이는 곳 모두 체크</button><button type="button" class="chip" id="pkNone">모두 해제</button></div>
+    <div class="opts" id="pk_list">${visible().map(rowHTML).join("") || `<div class="empty">조건에 맞는 곳이 없어요</div>`}</div>
+    <div class="pk-bar"><div class="pk-sum" id="pk_sum">${esc(sumText())}</div>
+      <div class="actions"><button type="button" class="btn soft" id="pkBack">← 후보 목록</button>
+        <button type="button" class="btn soft" id="pkManual">직접 입력</button>
+        <button type="button" class="btn primary" id="pkApply">적용</button></div></div>`, () => {}, false);
+
+  const draw = () => {
+    $("#pk_list").innerHTML = visible().map(rowHTML).join("") || `<div class="empty">조건에 맞는 곳이 없어요</div>`;
+    $("#pk_chips").innerHTML = chipHTML(); $("#pk_sum").textContent = sumText();
+  };
+  $("#pk_q").oninput = e => { q = e.target.value.trim(); draw(); };
+  const sheet = $("#sheet");
+  sheet.onchange = e => {
+    const c = e.target.closest(".pk-chk"); if (!c) return;
+    const p = all.find(x => String(x.id) === c.closest("[data-place]").dataset.place);
+    if (c.checked) picked.add(p.name); else picked.delete(p.name);
+    c.closest(".opt").classList.toggle("on", c.checked);
+    $("#pk_sum").textContent = sumText(); $("#pk_chips").innerHTML = chipHTML();
+  };
+  sheet.onclick = async e => {
+    const f = e.target.closest("[data-filt]");
+    if (f) { filt = f.dataset.filt; return draw(); }
+    if (e.target.closest("#pkAll")) { visible().forEach(p => picked.add(p.name)); return draw(); }
+    if (e.target.closest("#pkNone")) { visible().forEach(p => { if (p.name !== chosen) picked.delete(p.name); }); return draw(); }
     if (e.target.closest("#pkBack")) return openSlot(s);
     if (e.target.closest("#pkManual")) return openOptionForm(s);
-    const r = e.target.closest("[data-place]");
-    if (!r) return;
-    const p = list.find(x => String(x.id) === r.dataset.place);
+    if (!e.target.closest("#pkApply")) return;
+    const { add, del } = diff();
+    if (!add.length && !del.length) return openSlot(s);
+    const btn = $("#pkApply"); btn.disabled = true; btn.textContent = "저장 중…";
     try {
-      await store.addOption({ slot_id: s.id, title: p.name, area: p.area, menu: p.menu, memo: p.memo, url: p.source_url,
-                              photo_url: p.photo_url, badge: p.badge, lat: p.lat, lng: p.lng, sort: optionsOf(s.id).length });
-      toast(`«${p.name}» 후보에 넣었어요`);
-    } catch (err) { if (isDup(err)) toast("이미 후보에 있어요"); else return fail(err); }
+      for (const [i, p] of add.entries()) {
+        try {
+          await store.addOption({ slot_id: s.id, title: p.name, area: p.area, menu: p.menu, memo: p.memo, url: p.source_url,
+                                  photo_url: p.photo_url, badge: p.badge, sort: cur.size + i });
+        } catch (err) { if (!isDup(err)) throw err; }
+      }
+      for (const o of del) await store.removeOption(o.id);
+      toast(`후보 ${[add.length ? `+${add.length}` : "", del.length ? `−${del.length}` : ""].filter(Boolean).join(" ")} 적용했어요`);
+    } catch (err) { return fail(err); }
     await reload();
     openSlot(slots.find(x => x.id === s.id) || s);
   };

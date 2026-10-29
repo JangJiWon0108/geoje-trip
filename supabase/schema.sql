@@ -176,6 +176,7 @@ create table if not exists public.trip_places (
 );
 
 alter table public.trip_places add column if not exists photo_url text;
+alter table public.trip_places add column if not exists tier text check (tier in ('A','B','C'));   -- 리뷰 수 · 별점으로 매긴 등급
 alter table public.trip_places enable row level security;
 drop policy if exists trip_places_admin on public.trip_places;
 create policy trip_places_admin on public.trip_places for all to anon using (public.admin_ok()) with check (public.admin_ok());
