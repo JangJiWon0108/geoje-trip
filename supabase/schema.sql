@@ -176,7 +176,11 @@ create table if not exists public.trip_places (
 );
 
 alter table public.trip_places add column if not exists photo_url text;
-alter table public.trip_places add column if not exists tier text check (tier in ('A','B','C'));   -- 리뷰 수 · 별점으로 매긴 등급
+alter table public.trip_places add column if not exists tier text;                  -- 리뷰 수 · 별점으로 매긴 등급(A · B · C, 주신 곳은 A)
+alter table public.trip_places drop constraint if exists trip_places_tier_check;
+alter table public.trip_places add constraint trip_places_tier_check check (tier is null or tier in ('A', 'B', 'C'));
+alter table public.trip_places add column if not exists naver_booking boolean;      -- 네이버 예약 가능 여부(null = 모름)
+alter table public.trip_places add column if not exists naver_booking_url text;     -- 네이버 예약 링크
 alter table public.trip_places enable row level security;
 drop policy if exists trip_places_admin on public.trip_places;
 create policy trip_places_admin on public.trip_places for all to anon using (public.admin_ok()) with check (public.admin_ok());
