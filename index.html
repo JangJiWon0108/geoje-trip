@@ -491,6 +491,7 @@ img.who { display: block; object-fit: cover; background: var(--surface-2); }
 .lock .err { display: inline-block; margin-top: 16px; font-size: 14px; font-weight: 600; }
 .lock .err:not(:empty) { padding: 8px 16px; border-radius: 99px; background: rgba(255, 92, 80, .22); border: 1px solid rgba(255, 150, 140, .45); }
 .lock .foot { margin-top: 18px; font-size: 12px; opacity: .5; }
+.disclaimer { position: relative; z-index: 1; max-width: 640px; margin: -140px auto calc(120px + var(--safe-b)); padding: 0 16px; font-size: 12px; line-height: 1.6; text-align: center; opacity: .55; }
 @media (prefers-reduced-motion: reduce) { .blob, .waves svg, .badge-ico { animation: none; } }
 .shake { animation: shake .4s; }
 @keyframes shake { 20%, 60% { transform: translateX(-8px); } 40%, 80% { transform: translateX(8px); } }
@@ -552,6 +553,7 @@ img.who { display: block; object-fit: cover; background: var(--surface-2); }
 </header>
 
 <main id="view"></main>
+<p class="disclaimer">영업시간 · 가격 · 예약 가능 여부는 바뀔 수 있으니 방문 전에 확인해 주세요. (Claude로 만든 페이지입니다)</p>
 
 <button class="fab" id="fab" aria-label="추가">
   <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
