@@ -198,7 +198,7 @@ $("#zoom").onclick = (e) => { if (e.target.tagName !== "IMG") $("#zoom").classLi
 
 // ─── 동선 지도 — 거제 · 통영 안에서 차로 다니는 곳만(기차 구간은 뺀다) ───
 const DCOL = ["#ff6b5a", "#0e8f8f", "#7c5cff"];
-let RAW = null, mapDay = "all", mapObj = null, mlP = null, mapDrawn = "";
+let RAW = null, mapDay = null, mapObj = null, mlP = null, mapDrawn = "";
 function loadML() {
   return mlP ||= new Promise((ok, no) => {
     const c = document.createElement("link"); c.rel = "stylesheet";
@@ -256,6 +256,7 @@ function stopListHtml(stops, legs) {
   return h;
 }
 function renderMapSec() {
+  if (mapDay === null) mapDay = DAYS[0] || "all";   // 처음엔 DAY 1
   const chips = [["all", "전체"], ...DAYS.map((d, i) => [d, `DAY ${i + 1}`])]
     .map(([v, l]) => `<button type="button" class="m-chip${mapDay === v ? " on" : ""}" data-mday="${v}">${l}</button>`).join("");
   return `<section data-day="map" hidden><h2><span class="dn">동선</span>거제 · 통영 지도</h2>
