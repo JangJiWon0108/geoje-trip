@@ -383,3 +383,26 @@ end $$;
 grant execute on function public.admin_settings(), public.admin_set_pass(text, text) to anon;
 
 notify pgrst, 'reload schema';
+
+-- ─────────────────────────────────────────────────────────────
+-- 일정표 · 안내 페이지용 공개 읽기 (2026-11-02)
+-- 암호 없이 열리는 일정표가 여행 앱에서 고른 곳을 바로 보이도록, 고른 일정만 돌려준다.
+-- 고르지 않은 후보 · 암호 · 접속 기록은 돌려주지 않는다.
+-- ─────────────────────────────────────────────────────────────
+create or replace function public.public_timeline() returns json
+language sql stable security definer set search_path = public as $$
+  select json_build_object(
+    'items', coalesce((
+      select json_agg(json_build_object('day', day, 'time', time, 'title', title, 'memo', memo, 'url', url) order by day, time)
+      from trip_items where kind = 'schedule'), '[]'::json),
+    'slots', coalesce((
+      select json_agg(json_build_object(
+               'day', s.day, 'time', s.time, 'kind', s.kind, 'title', s.title, 'fixed', s.fixed, 'memo', s.memo,
+               'chosen', case when o.id is null then null
+                              else json_build_object('title', o.title, 'area', o.area, 'menu', o.menu, 'url', o.url) end)
+             order by s.day, s.time)
+      from trip_slots s left join trip_options o on o.id = s.chosen_id), '[]'::json)
+  )
+$$;
+revoke all on function public.public_timeline() from public;
+grant execute on function public.public_timeline() to anon;

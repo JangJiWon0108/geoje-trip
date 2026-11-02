@@ -507,6 +507,8 @@ img.who { display: block; object-fit: cover; background: var(--surface-2); }
             backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
             font-size: 13px; font-weight: 700; transition: transform .12s ease; }
 .hero-btn:active { transform: scale(.93); }
+a.hero-btn { text-decoration: none; }
+.hero-links { margin-top: 8px; }
 .hero-btn b { min-width: 22px; padding: 1px 8px; border-radius: 99px; background: #fff; color: #e0435a;
               font-size: 12px; font-weight: 800; font-variant-numeric: tabular-nums; }
 .heart { display: inline-block; }
@@ -554,6 +556,12 @@ img.who { display: block; object-fit: cover; background: var(--surface-2); }
     <button type="button" class="hero-btn cheer" id="cheerBtn"><span class="heart">💖</span>개발자 응원<b id="cheerN">·</b></button>
     <button type="button" class="hero-btn" id="bugBtn">🐞 버그 신고</button>
   </div>
+  <nav class="hero-actions hero-links">
+    <a class="hero-btn" href="timeline.html">🗓️ 일정표</a>
+    <a class="hero-btn" href="../places/haejang.html">🍲 아침 식당</a>
+    <a class="hero-btn" href="../places/tongyeong.html">⛵ 통영 할 일</a>
+    <a class="hero-btn" href="../places/festival.html">🎉 축제</a>
+  </nav>
   <div class="hero-wave">🌊</div>
 </header>
 
