@@ -1,0 +1,157 @@
+<!doctype html>
+<html lang="ko"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>거제 야호 일정표</title>
+<link rel="icon" type="image/png" href="../icons/icon-192.png">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<style>
+:root{--bg:#f7f9fb;--ink:#14232b;--muted:#56656e;--line:rgba(15,35,45,.10);--brand:#0e7c86;--card:#fff;--ok:#0a7a3d;--ok-bg:#e3f6ea}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:"Pretendard Variable",Pretendard,-apple-system,"Apple SD Gothic Neo","Malgun Gothic",sans-serif;font-size:14px;line-height:1.45;-webkit-tap-highlight-color:transparent}
+body.lock{overflow:hidden}
+main{max-width:720px;margin:0 auto;padding:20px 16px 40px}
+header{display:flex;align-items:flex-start;justify-content:space-between;gap:10px}
+header h1{margin:0;font-size:22px} header p{margin:4px 0 0;color:var(--muted);font-size:13px}
+.resv-btn{flex:none;font:inherit;font-size:13px;font-weight:700;color:var(--ok);background:var(--ok-bg);border:0;border-radius:99px;padding:8px 12px;cursor:pointer}
+.seg{position:sticky;top:0;z-index:5;display:flex;gap:6px;margin:14px -16px 0;padding:8px 16px;background:var(--bg)}
+.seg button{flex:1;font:inherit;font-size:14px;font-weight:700;padding:10px 0;border-radius:10px;border:1px solid var(--line);background:#fff;color:var(--muted);cursor:pointer}
+.seg button span{display:block;font-size:11px;font-weight:500}
+.seg button.on{background:var(--brand);border-color:var(--brand);color:#fff}
+section{margin-top:14px} section[hidden]{display:none}
+h2{font-size:16px;margin:0 0 8px;display:flex;align-items:center;gap:8px}
+.dn{background:var(--brand);color:#fff;font-size:11px;font-weight:700;padding:3px 8px;border-radius:99px}
+table{width:100%;border-collapse:separate;border-spacing:0;background:var(--card);border:1px solid var(--line);border-radius:12px;overflow:hidden;table-layout:fixed}
+th{background:#eef3f6;color:var(--muted);font-size:12px;font-weight:600;text-align:left;padding:8px 10px}
+td{padding:12px 10px;border-top:1px solid var(--line);vertical-align:top}
+tbody tr{cursor:pointer} tbody tr:active td{background:#f1f6f8}
+.c-t{width:60px;font-weight:700;font-variant-numeric:tabular-nums;border-left:4px solid var(--c,transparent)}
+th.c-t{border-left:4px solid transparent}
+.c-g{width:84px;text-align:right;vertical-align:middle}
+.more{display:inline-flex;align-items:center;gap:2px;font-size:13px;font-weight:700;color:var(--brand);background:rgba(14,124,134,.12);border:1px solid rgba(14,124,134,.25);padding:7px 10px 7px 12px;border-radius:99px;white-space:nowrap} .more::after{content:"›";font-size:17px;line-height:1;margin-top:-2px}
+tbody tr:active .more{background:var(--brand);color:#fff}
+td b{display:block;font-size:15px}
+td small{display:block;color:var(--muted);font-size:12px;margin-top:2px}
+.tag{display:inline-block;font-size:11px;font-weight:600;color:var(--c);margin-bottom:2px}
+.fest{color:#c2410c!important;background:#fff1e6!important;text-decoration:none;margin-left:4px}
+.ok{display:inline-block;margin-top:6px;font:inherit;font-size:12px;font-weight:700;color:var(--ok);background:var(--ok-bg);border:0;padding:3px 10px;border-radius:99px;cursor:pointer}
+footer{margin-top:24px;text-align:center;font-size:12px;color:var(--muted)} footer a{color:var(--brand)}
+/* 팝업 */
+.dim{position:fixed;inset:0;background:rgba(10,20,25,.45);z-index:20;opacity:0;pointer-events:none;transition:opacity .2s}
+.dim.on{opacity:1;pointer-events:auto}
+.sheet{position:fixed;left:0;right:0;bottom:0;z-index:21;max-width:560px;margin:0 auto;max-height:86vh;overflow:auto;background:#fff;border-radius:18px 18px 0 0;padding:10px 18px calc(18px + env(safe-area-inset-bottom));transform:translateY(105%);transition:transform .25s ease}
+.sheet.on{transform:none}
+.handle{width:40px;height:4px;border-radius:9px;background:#d5dde2;margin:0 auto 12px}
+.sh-tag{font-size:12px;font-weight:700}
+.sheet h3{margin:2px 0 2px;font-size:19px}
+.sh-sub{color:var(--muted);font-size:13px;margin:0}
+.sh-list{list-style:none;margin:14px 0 0;padding:12px 14px;background:#f5f8fa;border-radius:12px}
+.sh-list li{display:flex;gap:8px;padding:4px 0;font-size:14px} .sh-list i{font-style:normal;flex:none;width:20px;text-align:center}
+.acts{display:flex;gap:8px;margin-top:14px}
+.acts a,.acts button{flex:1;text-align:center;font:inherit;font-size:14px;font-weight:700;padding:12px 0;border-radius:12px;border:1px solid var(--line);background:#fff;color:var(--ink);text-decoration:none;cursor:pointer}
+.acts .pri{background:var(--brand);border-color:var(--brand);color:#fff}
+.acts .okb{background:var(--ok-bg);border-color:var(--ok-bg);color:var(--ok)}
+.rv{margin-top:14px;border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.rv dl{display:grid;grid-template-columns:72px 1fr;gap:6px 10px;margin:0;padding:12px 14px;font-size:14px}
+.rv dt{color:var(--muted)} .rv dd{margin:0;font-weight:600}
+.rv-shot{position:relative;display:block;border-top:1px solid var(--line);cursor:zoom-in}
+.rv-shot img{display:block;width:100%;height:170px;object-fit:cover;object-position:top}
+.rv-shot span{position:absolute;right:10px;bottom:10px;font-size:12px;font-weight:700;color:#fff;background:rgba(0,0,0,.6);padding:5px 10px;border-radius:99px}
+.rv-item{display:flex;gap:12px;align-items:center;padding:12px 0;border-top:1px solid var(--line);cursor:pointer}
+.rv-item:first-of-type{border-top:0}
+.rv-item img{width:56px;height:56px;object-fit:cover;object-position:top;border-radius:10px;border:1px solid var(--line)}
+.rv-item b{display:block} .rv-item small{color:var(--muted)}
+.zoom{position:fixed;inset:0;z-index:30;background:rgba(0,0,0,.9);display:none;overflow:auto;padding:16px}
+.zoom.on{display:block} .zoom img{display:block;max-width:100%;margin:0 auto;border-radius:8px}
+.zoom button{position:fixed;top:12px;right:12px;font:inherit;font-size:14px;font-weight:700;border:0;border-radius:99px;padding:8px 14px;background:#fff;cursor:pointer}
+@media (max-width:420px){main{padding:16px 12px 32px} .seg{margin:14px -12px 0;padding:8px 12px} td{padding:11px 8px} .c-t{width:54px} .c-g{width:78px} .more{padding:6px 8px 6px 10px;font-size:12.5px}}
+</style></head><body><main>
+<header><div><h1>🌊 거제 야호 일정표</h1><p>11월 6일(금) ~ 7일(토) · 앱에서 정한 곳만 · 11/2 기준</p></div>
+<button type="button" class="resv-btn" id="resvAll">📋 예약 1</button></header>
+<nav class="seg"><button type="button" data-day="1">DAY 1<span>11/6 (금)</span></button><button type="button" data-day="2">DAY 2<span>11/7 (토)</span></button></nav>
+<section data-day="1"><h2><span class="dn">DAY 1</span>11월 6일 (금)</h2><table><thead><tr><th class="c-t">시간</th><th>일정</th><th class="c-g"></th></tr></thead><tbody><tr data-row="0" style="--c:#0e7c86"><td class="c-t">10:00</td><td><span class="tag">🚄 이동</span><b>출발 — 수서 → 울산(통도사)</b></td><td class="c-g"><span class="more">자세히</span></td></tr><tr data-row="1" style="--c:#0e7c86"><td class="c-t">10:47</td><td><span class="tag">🚄 이동</span><b>태원 · 상무 출발 — 구미 → 울산(통도사)</b></td><td class="c-g"><span class="more">자세히</span></td></tr><tr data-row="2" style="--c:#ff6b5a"><td class="c-t">14:00</td><td><span class="tag">🍽️ 점심</span><b>박정현게장백반</b><small>장승포 · 게장 정식 · 꼬막비빔밥 · 멍게비빔밥</small><button type="button" class="ok" data-resv="2">✅ 예약 완료 ›</button></td><td class="c-g"><span class="more">자세히</span></td></tr><tr data-row="3" style="--c:#b07848"><td class="c-t">15:30</td><td><span class="tag">☕ 카페</span><b>카페 포뷰</b><small>장승포 · 흑임자크림라떼 · 파니니</small></td><td class="c-g"><span class="more">자세히</span></td></tr><tr data-row="4" style="--c:#0ea5a4"><td class="c-t">16:40</td><td><span class="tag">📸 놀거리</span><b>바람의 언덕</b><small>남부 도장포 · 11m 네덜란드식 풍차 · 450m 데크길</small><a class="ok fest" href="../places/windhill.html">🌬️ 바람의 언덕 안내 ›</a></td><td class="c-g"><span class="more">자세히</span></td></tr><tr data-row="5" style="--c:#7c5cff"><td class="c-t">17:50</td><td><span class="tag">🛒 장보기</span><b>하나로마트 거제해금강농협본점</b><small>남부 동부면 · 장보기</small></td><td class="c-g"><span class="more">자세히</span></td></tr><tr data-row="6" style="--c:#0e7c86"><td class="c-t">18:45</td><td><span class="tag">🏠 숙소</span><b>숙소 체크인 — 르솔레이 풀빌라</b></td><td class="c-g"><span class="more">자세히</span></td></tr><tr data-row="7" style="--c:#ff7a1a"><td class="c-t">19:00</td><td><span class="tag">🔥 저녁</span><b>저녁 바베큐 파티</b></td><td class="c-g"><span class="more">자세히</span></td></tr></tbody></table></section><section data-day="2"><h2><span class="dn">DAY 2</span>11월 7일 (토)</h2><table><thead><tr><th class="c-t">시간</th><th>일정</th><th class="c-g"></th></tr></thead><tbody><tr data-row="8" style="--c:#0e7c86"><td class="c-t">10:00</td><td><span class="tag">🏠 숙소</span><b>체크아웃</b></td><td class="c-g"><span class="more">자세히</span></td></tr><tr data-row="9" style="--c:#ff6b5a"><td class="c-t">10:10</td><td><span class="tag">🍽️ 아점</span><b>대박난맛집 거제 학동점</b><small>학동 · 문어 해물칼국수 · 충무김밥 · 멍게비빔밥</small></td><td class="c-g"><span class="more">자세히</span></td></tr><tr data-row="10" style="--c:#0ea5a4"><td class="c-t">12:00</td><td><span class="tag">📸 놀거리</span><b>통영케이블카</b><small>통영 도남동 · 미륵산 정상 한려수도 전망</small><a class="ok fest" href="../places/cablecar.html">🚡 케이블카 안내 ›</a></td><td class="c-g"><span class="more">자세히</span></td></tr><tr data-row="11" style="--c:#0ea5a4"><td class="c-t">13:30</td><td><span class="tag">📸 놀거리</span><b>스카이라인 루지 통영</b><small>통영 · 루지 · 스카이라이드</small><a class="ok fest" href="../places/luge.html">🛷 루지 안내 ›</a></td><td class="c-g"><span class="more">자세히</span></td></tr><tr data-row="12" style="--c:#ff6b5a"><td class="c-t">14:50</td><td><span class="tag">🍽️ 축제 · 늦은 점심</span><b>어부장터X포트빌리지 통영</b><small>통영 도남동 · 수산물 미식축제 · 굴 · 장어 · 멍게 · 오이스터바</small><a class="ok fest" href="../places/festival.html">🎉 축제 안내 ›</a></td><td class="c-g"><span class="more">자세히</span></td></tr><tr data-row="13" style="--c:#b07848"><td class="c-t">16:10</td><td><span class="tag">☕ 간식</span><b>통영만나꿀빵</b><small>통영 강구안 · 꿀빵 中 6입 7,800원 · 大 10입 13,000원 · 종합세트 22,000원</small></td><td class="c-g"><span class="more">자세히</span></td></tr><tr data-row="14" style="--c:#ff6b5a"><td class="c-t">16:20</td><td><span class="tag">🍽️ 이른 저녁</span><b>뚱보할매김밥집</b><small>통영 강구안 · 충무김밥 7,000원 · 포장 가능</small></td><td class="c-g"><span class="more">자세히</span></td></tr><tr data-row="15" style="--c:#0e7c86"><td class="c-t">19:00</td><td><span class="tag">🚄 이동</span><b>복귀 — 태화강역</b></td><td class="c-g"><span class="more">자세히</span></td></tr></tbody></table></section>
+<footer><a href="app.html">여행 앱에서 고르기 →</a></footer>
+</main>
+<div class="dim" id="dim"></div>
+<div class="sheet" id="sheet" role="dialog" aria-modal="true"></div>
+<div class="zoom" id="zoom"><button type="button">닫기 ✕</button><img alt="예약 화면"></div>
+<script>
+const ROWS=[{"time": "10:00", "day": "11/6 (금)", "ic": "🚄", "tag": "이동", "color": "#0e7c86", "name": "출발 — 수서 → 울산(통도사)", "sub": "", "url": null, "memo": ["🚉 울산(통도사)역 12:16 도착", "👥 구미에서 오는 태원 · 상무도 12:16 도착", "🚗 역에서 다 같이 도영 차로 거제"], "resv": null}, {"time": "10:47", "day": "11/6 (금)", "ic": "🚄", "tag": "이동", "color": "#0e7c86", "name": "태원 · 상무 출발 — 구미 → 울산(통도사)", "sub": "", "url": null, "memo": ["🚂 무궁화 1153 · 구미 10:47 → 동대구 11:24", "⏳ 동대구에서 환승 23분", "🚄 KTX-산천 319 · 동대구 11:47 → 울산(통도사) 12:16"], "resv": null}, {"time": "14:00", "day": "11/6 (금)", "ic": "🍽️", "tag": "점심", "color": "#ff6b5a", "name": "박정현게장백반", "sub": "장승포 · 게장 정식 · 꼬막비빔밥 · 멍게비빔밥", "url": "https://m.place.naver.com/restaurant/33391230/home", "memo": ["🅿️ 문화예술회관 안 홈포레스트호텔 주차장 · 주차권 받기", "🚗 울산(통도사)역 → 거가대교 → 장승포", "⏱️ 약 1시간 40분 · 도영 운전"], "resv": {"when": "11/6(금) 14:00", "people": "4명", "status": "네이버 예약 · 확인중", "no": "1395967040", "tel": "010-8697-9487", "img": "../img/resv/bakjh_1106.jpg", "note": "문화예술회관 안 홈포레스트호텔 주차장 · 주차권 받기"}}, {"time": "15:30", "day": "11/6 (금)", "ic": "☕", "tag": "카페", "color": "#b07848", "name": "카페 포뷰", "sub": "장승포 · 흑임자크림라떼 · 파니니", "url": "https://m.place.naver.com/restaurant/1137049658/home", "memo": ["🚶 박정현게장에서 걸어서", "📍 같은 장승포로"], "resv": null}, {"time": "16:40", "day": "11/6 (금)", "ic": "📸", "tag": "놀거리", "color": "#0ea5a4", "name": "바람의 언덕", "sub": "남부 도장포 · 11m 네덜란드식 풍차 · 450m 데크길", "url": "https://m.place.naver.com/place/19796736/home", "memo": ["🚗 카페 포뷰 → 바람의 언덕 약 40분", "🌅 일몰 약 17:30 · 노을 보고 출발"], "resv": null}, {"time": "17:50", "day": "11/6 (금)", "ic": "🛒", "tag": "장보기", "color": "#7c5cff", "name": "하나로마트 거제해금강농협본점", "sub": "남부 동부면 · 장보기", "url": "https://m.place.naver.com/place/1461246714/home", "memo": ["📝 고기 · 야채 · 밥 · 라면 · 음료 · 술 · 과자", "🚗 바람의 언덕 → 하나로마트 약 25분", "🏠 마트 → 숙소 약 15분"], "resv": null}, {"time": "18:45", "day": "11/6 (금)", "ic": "🏠", "tag": "숙소", "color": "#0e7c86", "name": "숙소 체크인 — 르솔레이 풀빌라", "sub": "", "url": "https://m.place.naver.com/place/1445487805/home", "memo": ["📍 동부면 거제대로 1085", "⏰ 체크인 15:00 · 늦으면 미리 연락", "📞 010-2694-1085", "🚭 금연 — 적발 시 퇴실", "🐶 반려동물 안 됨"], "resv": null}, {"time": "19:00", "day": "11/6 (금)", "ic": "🔥", "tag": "저녁", "color": "#ff7a1a", "name": "저녁 바베큐 파티", "sub": "", "url": null, "memo": ["🔥 객실 테라스 바베큐", "💰 그릴 2만 원 현장결제", "🚫 개인 버너 · 전기그릴 금지", "☔ 비 오면 실내로 대체"], "resv": null}, {"time": "10:00", "day": "11/7 (토)", "ic": "🏠", "tag": "숙소", "color": "#0e7c86", "name": "체크아웃", "sub": "", "url": null, "memo": ["⏰ 퇴실 10:00", "🧳 짐 챙겨서 바로 학동 해장 아점 (차로 3분)"], "resv": null}, {"time": "10:10", "day": "11/7 (토)", "ic": "🍽️", "tag": "아점", "color": "#ff6b5a", "name": "대박난맛집 거제 학동점", "sub": "학동 · 문어 해물칼국수 · 충무김밥 · 멍게비빔밥", "url": "https://m.place.naver.com/restaurant/30889304/home", "memo": ["🍲 체크아웃하고 바로 해장", "📍 학동 해변 앞 · 숙소에서 차로 3분"], "resv": null}, {"time": "12:00", "day": "11/7 (토)", "ic": "📸", "tag": "놀거리", "color": "#0ea5a4", "name": "통영케이블카", "sub": "통영 도남동 · 미륵산 정상 한려수도 전망", "url": "https://m.place.naver.com/place/15420022/home", "memo": ["🚗 학동 → 통영 약 1시간 · 도영 운전", "🎟️ 대인 왕복 17,000원 · 09:30~17:00", "📍 루지 바로 옆"], "resv": null}, {"time": "13:30", "day": "11/7 (토)", "ic": "📸", "tag": "놀거리", "color": "#0ea5a4", "name": "스카이라인 루지 통영", "sub": "통영 · 루지 · 스카이라이드", "url": "https://m.place.naver.com/place/585836377/home", "memo": ["🚶 케이블카 바로 옆", "🎟️ 3회권 34,000원 · 10:00~18:00", "☔ 비 오면 운행 중지"], "resv": null}, {"time": "14:50", "day": "11/7 (토)", "ic": "🍽️", "tag": "축제 · 늦은 점심", "color": "#ff6b5a", "name": "어부장터X포트빌리지 통영", "sub": "통영 도남동 · 수산물 미식축제 · 굴 · 장어 · 멍게 · 오이스터바", "url": "https://m.place.naver.com/place/584120538/home", "memo": ["🎉 어부장터X포트빌리지 통영 (11/6~8 · 무료 입장)", "🚗 루지에서 차로 약 5분 · 도남동 트라이애슬론광장", "🦪 굴 · 장어 · 멍게 먹거리로 점심 겸", "🎺 퍼레이드 15:30"], "resv": null}, {"time": "16:10", "day": "11/7 (토)", "ic": "☕", "tag": "간식", "color": "#b07848", "name": "통영만나꿀빵", "sub": "통영 강구안 · 꿀빵 中 6입 7,800원 · 大 10입 13,000원 · 종합세트 22,000원", "url": "https://m.place.naver.com/restaurant/1760484265/home", "memo": ["🍯 꿀빵 포장 · 中 6입 7,800원 · 大 10입 13,000원", "🚶 뚱보할매김밥집에서 걸어서 3분(강구안)", "💡 카페를 강구안 쪽으로 고르면 동선이 이어짐"], "resv": null}, {"time": "16:20", "day": "11/7 (토)", "ic": "🍽️", "tag": "이른 저녁", "color": "#ff6b5a", "name": "뚱보할매김밥집", "sub": "통영 강구안 · 충무김밥 7,000원 · 포장 가능", "url": "https://m.place.naver.com/restaurant/11694124/home", "memo": ["🍙 충무김밥 포장해서 차에서 먹어도 됨", "🚗 16:40 통영 출발 → 태화강역 약 2시간", "🚄 19:00 기차"], "resv": null}, {"time": "19:00", "day": "11/7 (토)", "ic": "🚄", "tag": "이동", "color": "#0e7c86", "name": "복귀 — 태화강역", "sub": "", "url": null, "memo": ["🚗 통영 → 태화강역 약 2시간 · 16:40 출발 · 도영 운전", "🚄 19:00 태원 · 상무", "🚄 20:00 지원 → 청량리 22:58 도착"], "resv": null}];
+const DAYS=["2026-11-06", "2026-11-07"];
+const $=s=>document.querySelector(s);
+const esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"})[c]);
+
+// DAY 선택
+function show(n){
+  document.querySelectorAll("section[data-day]").forEach(x=>x.hidden=x.dataset.day!==String(n));
+  document.querySelectorAll(".seg button").forEach(b=>b.classList.toggle("on",b.dataset.day===String(n)));
+  try{localStorage.setItem("tl_day",n)}catch(e){}
+}
+$(".seg").onclick=e=>{const b=e.target.closest("button");if(b){show(b.dataset.day);scrollTo({top:0})}};
+const now=new Date(),iso=now.getFullYear()+"-"+String(now.getMonth()+1).padStart(2,"0")+"-"+String(now.getDate()).padStart(2,"0");
+let d0=DAYS.indexOf(iso)+1;
+if(!d0){try{d0=+localStorage.getItem("tl_day")||1}catch(e){d0=1}}
+show(d0>DAYS.length?1:d0);
+
+// 팝업
+function openSheet(html){
+  $("#sheet").innerHTML='<div class="handle"></div>'+html;
+  $("#sheet").scrollTop=0;
+  $("#dim").classList.add("on");$("#sheet").classList.add("on");document.body.classList.add("lock");
+}
+function closeSheet(){$("#dim").classList.remove("on");$("#sheet").classList.remove("on");document.body.classList.remove("lock")}
+$("#dim").onclick=closeSheet;
+addEventListener("keydown",e=>{if(e.key==="Escape"){$("#zoom").classList.remove("on");closeSheet()}});
+
+const memoItem=t=>{const m=t.match(/^(\p{Extended_Pictographic}\uFE0F?|\S)\s+(.*)$/u);return m?`<li><i>${m[1]}</i><span>${esc(m[2])}</span></li>`:`<li><i>·</i><span>${esc(t)}</span></li>`};
+function resvBox(v){
+  return `<div class="rv"><dl><dt>일시</dt><dd>${esc(v.when)}</dd><dt>인원</dt><dd>${esc(v.people)}</dd>
+    <dt>상태</dt><dd>${esc(v.status)}</dd><dt>예약번호</dt><dd>${esc(v.no)}</dd>
+    ${v.tel?`<dt>전화</dt><dd><a href="tel:${esc(v.tel)}">${esc(v.tel)}</a></dd>`:""}
+    ${v.note?`<dt>주차</dt><dd>${esc(v.note)}</dd>`:""}</dl>
+    ${v.img?`<div class="rv-shot" data-zoom="${esc(v.img)}"><img src="${esc(v.img)}" alt="예약 화면"><span>🔍 예약 화면 크게 보기</span></div>`:""}</div>`;
+}
+function openRow(k,resvFirst){
+  const r=ROWS[k];
+  const head=`<div class="sh-tag" style="color:${r.color}">${r.ic} ${esc(r.tag)} · ${esc(r.day)} ${r.time}</div>
+    <h3>${esc(r.name)}</h3>${r.sub?`<p class="sh-sub">${esc(r.sub)}</p>`:""}`;
+  const memo=r.memo.length?`<ul class="sh-list">${r.memo.map(memoItem).join("")}</ul>`:"";
+  const acts=`<div class="acts">${r.url?`<a class="pri" href="${esc(r.url)}" target="_blank" rel="noopener">네이버 지도</a>`:""}<button type="button" data-close>닫기</button></div>`;
+  openSheet(head+(r.resv?(resvFirst?resvBox(r.resv)+memo:memo+resvBox(r.resv)):memo)+acts);
+}
+function openResvAll(){
+  const list=ROWS.map((r,k)=>[r,k]).filter(([r])=>r.resv);
+  const html=`<h3>📋 예약 현황</h3><p class="sh-sub">${list.length}곳 예약함</p>
+    <div style="margin-top:10px">${list.map(([r,k])=>`<div class="rv-item" data-open="${k}">
+      ${r.resv.img?`<img src="${esc(r.resv.img)}" alt="">`:""}
+      <div><b>✅ ${esc(r.name)}</b><small>${esc(r.resv.when)} · ${esc(r.resv.people)} · ${esc(r.resv.status)}</small></div></div>`).join("")||'<p class="sh-sub">아직 예약한 곳이 없어요</p>'}</div>
+    <div class="acts"><button type="button" data-close>닫기</button></div>`;
+  openSheet(html);
+}
+$("#resvAll").onclick=openResvAll;
+document.querySelectorAll("tbody tr").forEach(tr=>tr.onclick=e=>{
+  if(e.target.closest("a"))return;
+  const b=e.target.closest("[data-resv]");
+  openRow(+tr.dataset.row,!!b);
+});
+$("#sheet").onclick=e=>{
+  if(e.target.closest("[data-close]"))return closeSheet();
+  const o=e.target.closest("[data-open]");if(o)return openRow(+o.dataset.open,true);
+  const z=e.target.closest("[data-zoom]");
+  if(z){$("#zoom img").src=z.dataset.zoom;$("#zoom").classList.add("on");$("#zoom").scrollTop=0}
+};
+$("#zoom").onclick=e=>{if(e.target.tagName!=="IMG")$("#zoom").classList.remove("on")};
+</script><script>
+// 새 버전 확인 — GitHub Pages 가 10분 캐시하므로 서버의 Last-Modified 가 더 새로우면 다시 불러온다
+(function () {
+  function check() {
+    fetch(location.pathname, { method: "HEAD", cache: "no-store" }).then(function (r) {
+      var lm = Date.parse(r.headers.get("last-modified") || "");
+      var cur = new Date(document.lastModified).getTime();
+      if (lm && cur && lm - cur > 2000) location.replace(location.pathname + "?v=" + lm + location.hash);
+    }).catch(function () {});
+  }
+  check();
+  document.addEventListener("visibilitychange", function () { if (!document.hidden) check(); });
+})();
+</script>
+</body></html>

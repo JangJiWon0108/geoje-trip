@@ -1,0 +1,18 @@
+<!doctype html>
+<html lang="ko"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>페이지 이동</title>
+<script>
+// 예전 주소(맨 위에 있던 페이지)로 들어오면 새 위치로 넘겨 준다
+(function () {
+  var MAP = {
+    "index.html": "main/app.html", "timeline.html": "main/timeline.html", "admin.html": "manage/admin.html",
+    "haejang.html": "places/haejang.html", "tongyeong.html": "places/tongyeong.html", "festival.html": "places/festival.html",
+    "cablecar.html": "places/cablecar.html", "luge.html": "places/luge.html", "windhill.html": "places/windhill.html"
+  };
+  var base = "/geoje-trip/";
+  var rest = location.pathname.indexOf(base) === 0 ? location.pathname.slice(base.length) : "";
+  var to = MAP[rest] || (rest === "manage/" || rest === "manage" ? "manage/admin.html" : rest === "main/" || rest === "main" ? "main/app.html" : "");
+  location.replace(base + (to || "main/app.html") + location.search + location.hash);
+})();
+</script></head><body><a href="/geoje-trip/main/app.html">여행 앱 열기</a></body></html>
