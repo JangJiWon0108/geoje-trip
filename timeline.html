@@ -26,8 +26,9 @@ td{padding:12px 10px;border-top:1px solid var(--line);vertical-align:top}
 tbody tr{cursor:pointer} tbody tr:active td{background:#f1f6f8}
 .c-t{width:60px;font-weight:700;font-variant-numeric:tabular-nums;border-left:4px solid var(--c,transparent)}
 th.c-t{border-left:4px solid transparent}
-.c-g{width:62px;text-align:right;vertical-align:middle}
-.more{font-size:12px;color:var(--muted);white-space:nowrap} .more::after{content:" ›";font-size:15px}
+.c-g{width:84px;text-align:right;vertical-align:middle}
+.more{display:inline-flex;align-items:center;gap:2px;font-size:13px;font-weight:700;color:var(--brand);background:rgba(14,124,134,.12);border:1px solid rgba(14,124,134,.25);padding:7px 10px 7px 12px;border-radius:99px;white-space:nowrap} .more::after{content:"›";font-size:17px;line-height:1;margin-top:-2px}
+tbody tr:active .more{background:var(--brand);color:#fff}
 td b{display:block;font-size:15px}
 td small{display:block;color:var(--muted);font-size:12px;margin-top:2px}
 .tag{display:inline-block;font-size:11px;font-weight:600;color:var(--c);margin-bottom:2px}
@@ -61,7 +62,7 @@ footer{margin-top:24px;text-align:center;font-size:12px;color:var(--muted)} foot
 .zoom{position:fixed;inset:0;z-index:30;background:rgba(0,0,0,.9);display:none;overflow:auto;padding:16px}
 .zoom.on{display:block} .zoom img{display:block;max-width:100%;margin:0 auto;border-radius:8px}
 .zoom button{position:fixed;top:12px;right:12px;font:inherit;font-size:14px;font-weight:700;border:0;border-radius:99px;padding:8px 14px;background:#fff;cursor:pointer}
-@media (max-width:420px){main{padding:16px 12px 32px} .seg{margin:14px -12px 0;padding:8px 12px} td{padding:11px 8px} .c-t{width:54px} .c-g{width:54px}}
+@media (max-width:420px){main{padding:16px 12px 32px} .seg{margin:14px -12px 0;padding:8px 12px} td{padding:11px 8px} .c-t{width:54px} .c-g{width:78px} .more{padding:6px 8px 6px 10px;font-size:12.5px}}
 </style></head><body><main>
 <header><div><h1>🌊 거제 야호 일정표</h1><p>11월 6일(금) ~ 7일(토) · 앱에서 정한 곳만 · 11/2 기준</p></div>
 <button type="button" class="resv-btn" id="resvAll">📋 예약 1</button></header>
