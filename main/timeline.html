@@ -70,6 +70,24 @@ footer{margin-top:24px;text-align:center;font-size:12px;color:var(--muted)} foot
 .zoom{position:fixed;inset:0;z-index:30;background:rgba(0,0,0,.9);display:none;overflow:auto;padding:16px}
 .zoom.on{display:block} .zoom img{display:block;max-width:100%;margin:0 auto;border-radius:8px}
 .zoom button{position:fixed;top:12px;right:12px;font:inherit;font-size:14px;font-weight:700;border:0;border-radius:99px;padding:8px 14px;background:#fff;cursor:pointer}
+.m-chips{display:flex;gap:6px;margin-bottom:10px}
+.m-chip{font:inherit;font-size:13px;font-weight:700;padding:6px 14px;border-radius:99px;border:1px solid var(--line);background:#fff;color:var(--muted);cursor:pointer}
+.m-chip.on{background:var(--ink);border-color:var(--ink);color:#fff}
+.mapbox{height:56vh;min-height:320px;border-radius:12px;overflow:hidden;border:1px solid var(--line);background:#eef3f6;position:relative;isolation:isolate;z-index:0}
+.map-loading{height:100%;display:grid;place-items:center;color:var(--muted);font-size:14px}
+.spin{width:18px;height:18px;border-radius:50%;border:3px solid var(--line);border-top-color:var(--brand);animation:spin .8s linear infinite;display:inline-block;vertical-align:-4px;margin-right:8px}
+@keyframes spin{to{transform:rotate(360deg)}}
+.pin{width:28px;height:28px;border-radius:50%;background:var(--c);color:#fff;font-size:13px;font-weight:900;display:grid;place-items:center;border:3px solid #fff;box-shadow:0 3px 10px rgba(0,0,0,.28);cursor:pointer}
+.maplibregl-popup-content{font-family:inherit;font-size:13px;border-radius:12px;padding:10px 12px} .maplibregl-popup-content a{color:var(--brand);font-weight:700}
+.m-sum{margin:10px 2px 0;font-size:13px;font-weight:700}
+.m-list{margin-top:8px;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:4px 0 8px}
+.m-day{font-size:12px;font-weight:800;color:var(--muted);padding:12px 14px 6px}
+.stop{display:flex;align-items:center;gap:10px;padding:8px 14px;cursor:pointer} .stop:active{background:#f1f6f8}
+.stop .num{width:24px;height:24px;border-radius:50%;color:#fff;font-size:12px;font-weight:900;display:grid;place-items:center;flex:none}
+.st-time{width:42px;font-size:13px;font-weight:700;color:var(--muted);font-variant-numeric:tabular-nums;flex:none}
+.st-main{min-width:0} .st-main b{display:block;font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis} .st-main small{color:var(--muted);font-size:12px}
+.leg{margin:0 14px 0 25px;padding:3px 0 3px 22px;border-left:2px dashed var(--line);font-size:12px;font-weight:700;color:var(--muted)}
+.m-note{font-size:12px;color:var(--muted);margin:8px 2px 0}
 @media (max-width:420px){.th{width:50px;height:50px;font-size:22px}.cell{gap:8px}main{padding:16px 12px 32px}.seg{margin:12px -12px 0;padding:8px 12px}td{padding:11px 8px}.c-t{width:54px}.c-g{width:78px}.more{padding:6px 8px 6px 10px;font-size:12.5px}}
 </style></head><body><main>
 <header><div><h1>🌊 거제 야호 일정표</h1><p>11월 6일(금) ~ 7일(토) · 앱에서 정한 곳만 <span class="live off" id="liveTag">불러오는 중</span></p></div>
@@ -85,7 +103,7 @@ footer{margin-top:24px;text-align:center;font-size:12px;color:var(--muted)} foot
 <script src="../shared/trip-live.js"></script>
 <script>
 // DB 를 못 읽을 때 보여 줄 마지막 저장본
-const SNAP = {"items": [{"day": "2026-11-06", "time": "10:00:00", "title": "🚄 출발 — 수서 → 울산(통도사)", "memo": "🚉 울산(통도사)역 12:16 도착\n👥 구미에서 오는 태원 · 상무도 12:16 도착\n🚗 역에서 다 같이 도영 차로 거제", "url": null, "photo": null}, {"day": "2026-11-06", "time": "10:47:00", "title": "🚄 태원 · 상무 출발 — 구미 → 울산(통도사)", "memo": "🚂 무궁화 1153 · 구미 10:47 → 동대구 11:24\n⏳ 동대구에서 환승 23분\n🚄 KTX-산천 319 · 동대구 11:47 → 울산(통도사) 12:16", "url": null, "photo": null}, {"day": "2026-11-06", "time": "18:45:00", "title": "🏠 숙소 체크인 — 르솔레이 풀빌라", "memo": "📍 동부면 거제대로 1085\n⏰ 체크인 15:00 · 늦으면 미리 연락\n📞 010-2694-1085\n🚭 금연 — 적발 시 퇴실\n🐶 반려동물 안 됨", "url": "https://m.place.naver.com/place/1445487805/home", "photo": "https://ldb-phinf.pstatic.net/20230524_186/1684857249218Gql2V_JPEG/01.jpg"}, {"day": "2026-11-07", "time": "07:30:00", "title": "⏰ 기상", "memo": "⏰ 7:30~8:00 기상\n🧳 짐 싸기 · 9:00 체크아웃", "url": null, "photo": null}, {"day": "2026-11-07", "time": "09:00:00", "title": "🏠 체크아웃", "memo": "⏰ 퇴실 9:00 (1시간 일찍)\n🧳 짐 챙겨서 바로 학동 해장 아점 (차로 3분)", "url": null, "photo": "https://ldb-phinf.pstatic.net/20230524_186/1684857249218Gql2V_JPEG/01.jpg"}, {"day": "2026-11-07", "time": "09:50:00", "title": "🚗 통영으로 출발 — 학동 → 통영", "memo": "🍲 해장하고 바로 출발\n⏱️ 약 1시간 · 도영 운전\n📍 11:00쯤 통영케이블카(도남동) 도착", "url": null, "photo": null}, {"day": "2026-11-07", "time": "16:15:00", "title": "🚗 울산으로 출발 — 통영 → 태화강역", "memo": "⏱️ 약 2시간 · 도영 운전\n📍 18:15쯤 태화강역 도착 · 19:00 기차까지 여유 약 45분", "url": null, "photo": null}, {"day": "2026-11-07", "time": "19:00:00", "title": "🚄 복귀 — 태화강역", "memo": "🚄 19:00 태원 · 상무\n🚄 20:00 지원 → 청량리 22:58 도착\n🚗 태화강역까지 도영 차", "url": null, "photo": null}], "slots": [{"day": "2026-11-06", "time": "14:00:00", "kind": "meal", "title": "점심", "fixed": false, "memo": "✅ 예약 완료 · 11/6 14:00 · 4명\n🅿️ 문화예술회관 안 홈포레스트호텔 주차장 · 주차권 받기\n🚗 울산(통도사)역 → 거가대교 → 장승포\n⏱️ 약 1시간 40분 · 도영 운전", "photo": null, "chosen": {"title": "박정현게장백반", "area": "장승포", "menu": "게장 정식 · 꼬막비빔밥 · 멍게비빔밥", "url": "https://m.place.naver.com/restaurant/33391230/home", "photo": "https://ldb-phinf.pstatic.net/20260213_272/17709493709153Vd66_JPEG/11.jpg"}}, {"day": "2026-11-06", "time": "15:30:00", "kind": "cafe", "title": "카페", "fixed": false, "memo": "🚶 박정현게장에서 걸어서\n📍 같은 장승포로", "photo": null, "chosen": {"title": "카페 포뷰", "area": "장승포", "menu": "흑임자크림라떼 · 파니니", "url": "https://m.place.naver.com/restaurant/1137049658/home", "photo": "https://tong.visitkorea.or.kr/cms/resource/85/2900485_image2_1.jpg"}}, {"day": "2026-11-06", "time": "16:40:00", "kind": "spot", "title": "놀거리", "fixed": false, "memo": "🚗 카페 포뷰 → 바람의 언덕 약 40분\n🌅 일몰 약 17:30 · 노을 보고 출발", "photo": null, "chosen": {"title": "바람의 언덕", "area": "남부 도장포", "menu": "11m 네덜란드식 풍차 · 450m 데크길", "url": "https://m.place.naver.com/place/19796736/home", "photo": "https://www.telltrip.com/wp-content/uploads/2025/09/geoje-windmill-hill-travel1.webp"}}, {"day": "2026-11-06", "time": "17:50:00", "kind": "shop", "title": "장보기", "fixed": false, "memo": "📝 고기 · 야채 · 밥 · 라면 · 음료 · 술 · 과자\n🚗 바람의 언덕 → 하나로마트 약 25분\n🏠 마트 → 숙소 약 15분", "photo": null, "chosen": {"title": "하나로마트 거제해금강농협본점", "area": "남부 동부면", "menu": "장보기", "url": "https://m.place.naver.com/place/1461246714/home", "photo": "https://ldb-phinf.pstatic.net/20210310_254/1615342823934OPzLE_JPEG/k3xSWXu4IHOIxniXKHbv92Sn.jpeg.jpg"}}, {"day": "2026-11-06", "time": "19:00:00", "kind": "bbq", "title": "저녁 바베큐 파티", "fixed": true, "memo": "🔥 객실 테라스 바베큐\n💰 그릴 2만 원 현장결제\n🚫 개인 버너 · 전기그릴 금지\n☔ 비 오면 실내로 대체", "photo": "../img/bbq.jpg", "chosen": null}, {"day": "2026-11-07", "time": "09:10:00", "kind": "meal", "title": "아점", "fixed": false, "memo": "🍲 체크아웃하고 바로 해장\n📍 학동 해변 앞 · 숙소에서 차로 3분", "photo": null, "chosen": {"title": "대박난맛집 거제 학동점", "area": "학동", "menu": "문어 해물칼국수 · 충무김밥 · 멍게비빔밥", "url": "https://m.place.naver.com/restaurant/30889304/home", "photo": "https://ldb-phinf.pstatic.net/20260420_72/1776651337587lHKX6_JPEG/2G7A8880.JPG"}}, {"day": "2026-11-07", "time": "11:00:00", "kind": "spot", "title": "놀거리", "fixed": false, "memo": "⏱️ 약 1시간 30분 (주차 · 매표 줄 포함)\n🎟️ 대인 왕복 17,000원 · 09:30~17:00\n📍 루지 바로 옆", "photo": null, "chosen": {"title": "통영케이블카", "area": "통영 도남동", "menu": "미륵산 정상 한려수도 전망", "url": "https://m.place.naver.com/place/15420022/home", "photo": "https://ldb-phinf.pstatic.net/20260501_287/1777617724958emiqz_JPEG/4M8A8211_%BA%B9%BB%E7.jpg"}}, {"day": "2026-11-07", "time": "12:30:00", "kind": "spot", "title": "놀거리", "fixed": false, "memo": "⏱️ 약 1시간 40분 (리프트 대기 포함 3회)\n🚶 케이블카 바로 옆\n🎟️ 3회권 약 3만~3.4만 원 · 10:00~18:00\n💡 줄이 길면 2회권 · ☔ 비 오면 운행 중지", "photo": null, "chosen": {"title": "스카이라인 루지 통영", "area": "통영", "menu": "루지 · 스카이라이드", "url": "https://m.place.naver.com/place/585836377/home", "photo": "https://ldb-phinf.pstatic.net/20250916_171/1757980198252CEH1g_PNG/%B7%E7%C1%F62.png"}}, {"day": "2026-11-07", "time": "14:15:00", "kind": "meal", "title": "축제 · 점심", "fixed": false, "memo": "⏱️ 넉넉히 약 1시간 30분 (먹거리 줄 감안)\n🎉 어부장터X포트빌리지 통영 · 무료 입장\n🚗 루지에서 차로 약 5분 · 도남동 트라이애슬론광장\n🦪 굴 · 장어 · 멍게 먹거리로 점심\n🎺 퍼레이드 15:30", "photo": null, "chosen": {"title": "어부장터X포트빌리지 통영", "area": "통영 도남동", "menu": "수산물 미식축제 · 굴 · 장어 · 멍게 · 오이스터바", "url": "https://m.place.naver.com/place/584120538/home", "photo": "https://img8.yna.co.kr/etc/inner/KR/2026/07/30/AKR20260730097700052_01_i_P4.jpg"}}, {"day": "2026-11-07", "time": "15:50:00", "kind": "cafe", "title": "카페 (시간 남으면)", "fixed": false, "memo": "⏳ 시간 남으면 들르기 · 테이크아웃 추천\n🚶 꿀빵집(통영만나꿀빵)까지 400m\n💡 산미 없는 커피는 주문 때 말하기", "photo": null, "chosen": {"title": "바이사이드", "area": "통영 강구안", "menu": "스페셜티 싱글오리진 커피 · 디저트 · 베이커리", "url": "https://m.place.naver.com/restaurant/38729383/home", "photo": "https://search.pstatic.net/common/?autoRotate=true&quality=100&type=f640_380&src=https%3A%2F%2Fldb-phinf.pstatic.net%2F20260917_179%2F1789637501434tF0fl_JPEG%2FIMG_3921.jpg"}}, {"day": "2026-11-07", "time": "15:55:00", "kind": "cafe", "title": "간식", "fixed": false, "memo": "🍯 꿀빵 포장 · 中 6입 7,800원 · 大 10입 13,000원\n📍 강구안 · 통영해안로 349-2\n💡 카페를 강구안 쪽으로 고르면 동선이 이어짐", "photo": null, "chosen": {"title": "통영만나꿀빵", "area": "통영 강구안", "menu": "꿀빵 中 6입 7,800원 · 大 10입 13,000원 · 종합세트 22,000원", "url": "https://m.place.naver.com/restaurant/1760484265/home", "photo": "https://ldb-phinf.pstatic.net/20260320_46/1774004127640uUBpm_JPEG/IMG_1111.jpg"}}, {"day": "2026-11-07", "time": "16:05:00", "kind": "meal", "title": "이른 저녁", "fixed": false, "memo": "🍙 충무김밥 포장해서 차에서 먹어도 됨\n🚗 15:40 통영 출발 → 태화강역 약 2시간\n🚄 19:00 기차", "photo": null, "chosen": null}]};
+const SNAP = {"items": [{"day": "2026-11-06", "time": "10:00:00", "title": "🚄 출발 — 수서 → 울산(통도사)", "memo": "🚉 울산(통도사)역 12:16 도착\n👥 구미에서 오는 태원 · 상무도 12:16 도착\n🚗 역에서 다 같이 도영 차로 거제", "url": null, "photo": null, "geo": {"to": {"lat": 35.5513, "lng": 129.1387, "name": "울산역(통도사)", "time": "12:16"}, "from": {"lat": 37.485859, "lng": 127.0994091, "name": "수서역"}, "mode": "train"}}, {"day": "2026-11-06", "time": "10:47:00", "title": "🚄 태원 · 상무 출발 — 구미 → 울산(통도사)", "memo": "🚂 무궁화 1153 · 구미 10:47 → 동대구 11:24\n⏳ 동대구에서 환승 23분\n🚄 KTX-산천 319 · 동대구 11:47 → 울산(통도사) 12:16", "url": null, "photo": null, "geo": null}, {"day": "2026-11-06", "time": "18:45:00", "title": "🏠 숙소 체크인 — 르솔레이 풀빌라", "memo": "📍 동부면 거제대로 1085\n⏰ 체크인 15:00 · 늦으면 미리 연락\n📞 010-2694-1085\n🚭 금연 — 적발 시 퇴실\n🐶 반려동물 안 됨", "url": "https://m.place.naver.com/place/1445487805/home", "photo": "https://ldb-phinf.pstatic.net/20230524_186/1684857249218Gql2V_JPEG/01.jpg", "geo": {"at": {"lat": 34.7783829, "lng": 128.6527104, "name": "르솔레이 풀빌라"}}}, {"day": "2026-11-07", "time": "07:30:00", "title": "⏰ 기상", "memo": "⏰ 7:30~8:00 기상\n🧳 짐 싸기 · 9:00 체크아웃", "url": null, "photo": null, "geo": null}, {"day": "2026-11-07", "time": "09:00:00", "title": "🏠 체크아웃", "memo": "⏰ 퇴실 9:00 (1시간 일찍)\n🧳 짐 챙겨서 바로 학동 해장 아점 (차로 3분)", "url": null, "photo": "https://ldb-phinf.pstatic.net/20230524_186/1684857249218Gql2V_JPEG/01.jpg", "geo": {"at": {"lat": 34.7783829, "lng": 128.6527104, "name": "르솔레이 풀빌라"}}}, {"day": "2026-11-07", "time": "09:50:00", "title": "🚗 통영으로 출발 — 학동 → 통영", "memo": "🍲 해장하고 바로 출발\n⏱️ 약 1시간 · 도영 운전\n📍 11:00쯤 통영케이블카(도남동) 도착", "url": null, "photo": null, "geo": null}, {"day": "2026-11-07", "time": "16:15:00", "title": "🚗 울산으로 출발 — 통영 → 태화강역", "memo": "⏱️ 약 2시간 · 도영 운전\n📍 18:15쯤 태화강역 도착 · 19:00 기차까지 여유 약 45분", "url": null, "photo": null, "geo": null}, {"day": "2026-11-07", "time": "19:00:00", "title": "🚄 복귀 — 태화강역", "memo": "🚄 19:00 태원 · 상무\n🚄 20:00 지원 → 청량리 22:58 도착\n🚗 태화강역까지 도영 차", "url": null, "photo": null, "geo": {"at": {"lat": 35.5390336, "lng": 129.3541961, "name": "태화강역"}, "end": true}}], "slots": [{"day": "2026-11-06", "time": "14:00:00", "kind": "meal", "title": "점심", "fixed": false, "memo": "✅ 예약 완료 · 11/6 14:00 · 4명\n🅿️ 문화예술회관 안 홈포레스트호텔 주차장 · 주차권 받기\n🚗 울산(통도사)역 → 거가대교 → 장승포\n⏱️ 약 1시간 40분 · 도영 운전", "photo": null, "chosen": {"title": "박정현게장백반", "area": "장승포", "menu": "게장 정식 · 꼬막비빔밥 · 멍게비빔밥", "url": "https://m.place.naver.com/restaurant/33391230/home", "photo": "https://ldb-phinf.pstatic.net/20260213_272/17709493709153Vd66_JPEG/11.jpg", "lat": 34.8670965, "lng": 128.7247948}}, {"day": "2026-11-06", "time": "15:30:00", "kind": "cafe", "title": "카페", "fixed": false, "memo": "🚶 박정현게장에서 걸어서\n📍 같은 장승포로", "photo": null, "chosen": {"title": "카페 포뷰", "area": "장승포", "menu": "흑임자크림라떼 · 파니니", "url": "https://m.place.naver.com/restaurant/1137049658/home", "photo": "https://tong.visitkorea.or.kr/cms/resource/85/2900485_image2_1.jpg", "lat": 34.8629987, "lng": 128.7301978}}, {"day": "2026-11-06", "time": "16:40:00", "kind": "spot", "title": "놀거리", "fixed": false, "memo": "🚗 카페 포뷰 → 바람의 언덕 약 40분\n🌅 일몰 약 17:30 · 노을 보고 출발", "photo": null, "chosen": {"title": "바람의 언덕", "area": "남부 도장포", "menu": "11m 네덜란드식 풍차 · 450m 데크길", "url": "https://m.place.naver.com/place/19796736/home", "photo": "https://www.telltrip.com/wp-content/uploads/2025/09/geoje-windmill-hill-travel1.webp", "lat": 34.7432915, "lng": 128.663327}}, {"day": "2026-11-06", "time": "17:50:00", "kind": "shop", "title": "장보기", "fixed": false, "memo": "📝 고기 · 야채 · 밥 · 라면 · 음료 · 술 · 과자\n🚗 바람의 언덕 → 하나로마트 약 25분\n🏠 마트 → 숙소 약 15분", "photo": null, "chosen": {"title": "하나로마트 거제해금강농협본점", "area": "남부 동부면", "menu": "장보기", "url": "https://m.place.naver.com/place/1461246714/home", "photo": "https://ldb-phinf.pstatic.net/20210310_254/1615342823934OPzLE_JPEG/k3xSWXu4IHOIxniXKHbv92Sn.jpeg.jpg", "lat": 34.8268428, "lng": 128.6051973}}, {"day": "2026-11-06", "time": "19:00:00", "kind": "bbq", "title": "저녁 바베큐 파티", "fixed": true, "memo": "🔥 객실 테라스 바베큐\n💰 그릴 2만 원 현장결제\n🚫 개인 버너 · 전기그릴 금지\n☔ 비 오면 실내로 대체", "photo": "../img/bbq.jpg", "chosen": null}, {"day": "2026-11-07", "time": "09:10:00", "kind": "meal", "title": "아점", "fixed": false, "memo": "🍲 체크아웃하고 바로 해장\n📍 학동 해변 앞 · 숙소에서 차로 3분", "photo": null, "chosen": {"title": "대박난맛집 거제 학동점", "area": "학동", "menu": "문어 해물칼국수 · 충무김밥 · 멍게비빔밥", "url": "https://m.place.naver.com/restaurant/30889304/home", "photo": "https://ldb-phinf.pstatic.net/20260420_72/1776651337587lHKX6_JPEG/2G7A8880.JPG", "lat": 34.7721021, "lng": 128.6380012}}, {"day": "2026-11-07", "time": "11:00:00", "kind": "spot", "title": "놀거리", "fixed": false, "memo": "⏱️ 약 1시간 30분 (주차 · 매표 줄 포함)\n🎟️ 대인 왕복 17,000원 · 09:30~17:00\n📍 루지 바로 옆", "photo": null, "chosen": {"title": "통영케이블카", "area": "통영 도남동", "menu": "미륵산 정상 한려수도 전망", "url": "https://m.place.naver.com/place/15420022/home", "photo": "https://ldb-phinf.pstatic.net/20260501_287/1777617724958emiqz_JPEG/4M8A8211_%BA%B9%BB%E7.jpg", "lat": 34.8268542, "lng": 128.4253538}}, {"day": "2026-11-07", "time": "12:30:00", "kind": "spot", "title": "놀거리", "fixed": false, "memo": "⏱️ 약 1시간 40분 (리프트 대기 포함 3회)\n🚶 케이블카 바로 옆\n🎟️ 3회권 약 3만~3.4만 원 · 10:00~18:00\n💡 줄이 길면 2회권 · ☔ 비 오면 운행 중지", "photo": null, "chosen": {"title": "스카이라인 루지 통영", "area": "통영", "menu": "루지 · 스카이라이드", "url": "https://m.place.naver.com/place/585836377/home", "photo": "https://ldb-phinf.pstatic.net/20250916_171/1757980198252CEH1g_PNG/%B7%E7%C1%F62.png", "lat": 34.8244626, "lng": 128.4241905}}, {"day": "2026-11-07", "time": "14:15:00", "kind": "meal", "title": "축제 · 점심", "fixed": false, "memo": "⏱️ 넉넉히 약 1시간 30분 (먹거리 줄 감안)\n🎉 어부장터X포트빌리지 통영 · 무료 입장\n🚗 루지에서 차로 약 5분 · 도남동 트라이애슬론광장\n🦪 굴 · 장어 · 멍게 먹거리로 점심\n🎺 퍼레이드 15:30", "photo": null, "chosen": {"title": "어부장터X포트빌리지 통영", "area": "통영 도남동", "menu": "수산물 미식축제 · 굴 · 장어 · 멍게 · 오이스터바", "url": "https://m.place.naver.com/place/584120538/home", "photo": "https://img8.yna.co.kr/etc/inner/KR/2026/07/30/AKR20260730097700052_01_i_P4.jpg", "lat": 34.8256099, "lng": 128.4337351}}, {"day": "2026-11-07", "time": "15:50:00", "kind": "cafe", "title": "카페 (시간 남으면)", "fixed": false, "memo": "⏳ 시간 남으면 들르기 · 테이크아웃 추천\n🚶 꿀빵집(통영만나꿀빵)까지 400m\n💡 산미 없는 커피는 주문 때 말하기", "photo": null, "chosen": {"title": "바이사이드", "area": "통영 강구안", "menu": "스페셜티 싱글오리진 커피 · 디저트 · 베이커리", "url": "https://m.place.naver.com/restaurant/38729383/home", "photo": "https://search.pstatic.net/common/?autoRotate=true&quality=100&type=f640_380&src=https%3A%2F%2Fldb-phinf.pstatic.net%2F20260917_179%2F1789637501434tF0fl_JPEG%2FIMG_3921.jpg", "lat": 34.84214, "lng": 128.4228714}}, {"day": "2026-11-07", "time": "15:55:00", "kind": "cafe", "title": "간식", "fixed": false, "memo": "🍯 꿀빵 포장 · 中 6입 7,800원 · 大 10입 13,000원\n📍 강구안 · 통영해안로 349-2\n💡 카페를 강구안 쪽으로 고르면 동선이 이어짐", "photo": null, "chosen": {"title": "통영만나꿀빵", "area": "통영 강구안", "menu": "꿀빵 中 6입 7,800원 · 大 10입 13,000원 · 종합세트 22,000원", "url": "https://m.place.naver.com/restaurant/1760484265/home", "photo": "https://ldb-phinf.pstatic.net/20260320_46/1774004127640uUBpm_JPEG/IMG_1111.jpg", "lat": 34.844899, "lng": 128.4258471}}, {"day": "2026-11-07", "time": "16:05:00", "kind": "meal", "title": "이른 저녁", "fixed": false, "memo": "🍙 충무김밥 포장해서 차에서 먹어도 됨\n🚗 15:40 통영 출발 → 태화강역 약 2시간\n🚄 19:00 기차", "photo": null, "chosen": null}]};
 const $ = (s) => document.querySelector(s);
 const esc = (s) => String(s ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
 let ROWS = [], DAYS = [];
@@ -94,7 +112,8 @@ let ROWS = [], DAYS = [];
 function render(data) {
   ROWS = TripLive.rows(data);
   DAYS = [...new Set(ROWS.map((r) => r.day))].sort();
-  $("#seg").innerHTML = DAYS.map((d, i) => `<button type="button" data-day="${i + 1}">DAY ${i + 1}<span>${TripLive.dayLabel(d)}</span></button>`).join("");
+  $("#seg").innerHTML = DAYS.map((d, i) => `<button type="button" data-day="${i + 1}">DAY ${i + 1}<span>${TripLive.dayLabel(d)}</span></button>`).join("")
+    + '<button type="button" data-day="map">🗺️ 동선<span>지도</span></button>';
   $("#days").innerHTML = DAYS.map((d, i) => {
     const t = new Date(d + "T00:00:00");
     const body = ROWS.map((r, k) => [r, k]).filter(([r]) => r.day === d).map(([r, k]) => {
@@ -106,13 +125,14 @@ function render(data) {
     }).join("");
     return `<section data-day="${i + 1}"><h2><span class="dn">DAY ${i + 1}</span>${t.getMonth() + 1}월 ${t.getDate()}일 (${"일월화수목금토"[t.getDay()]})</h2>
       <table><thead><tr><th class="c-t">시간</th><th>일정</th><th class="c-g"></th></tr></thead><tbody>${body}</tbody></table></section>`;
-  }).join("");
+  }).join("") + renderMapSec();
+  RAW = data; mapDrawn = "";
   $("#resvAll").textContent = "📋 예약 " + ROWS.filter((r) => r.resv).length;
   let cur = 1;
-  try { cur = +localStorage.getItem("tl_day") || 1; } catch (e) {}
+  try { const v = localStorage.getItem("tl_day"); cur = v === "map" ? "map" : +v || 1; } catch (e) {}
   const now = new Date(), iso = now.getFullYear() + "-" + String(now.getMonth() + 1).padStart(2, "0") + "-" + String(now.getDate()).padStart(2, "0");
-  if (DAYS.indexOf(iso) >= 0) cur = DAYS.indexOf(iso) + 1;
-  show(cur > DAYS.length ? 1 : cur);
+  if (DAYS.indexOf(iso) >= 0 && cur !== "map") cur = DAYS.indexOf(iso) + 1;
+  show(cur === "map" ? "map" : cur > DAYS.length ? 1 : cur);
 }
 
 // DAY 선택
@@ -120,6 +140,7 @@ function show(n) {
   document.querySelectorAll("section[data-day]").forEach((x) => (x.hidden = x.dataset.day !== String(n)));
   document.querySelectorAll(".seg button").forEach((b) => b.classList.toggle("on", b.dataset.day === String(n)));
   try { localStorage.setItem("tl_day", n); } catch (e) {}
+  if (String(n) === "map") drawMap();
 }
 $("#seg").onclick = (e) => { const b = e.target.closest("button"); if (b) { show(b.dataset.day); scrollTo({ top: 0 }); } };
 
@@ -174,6 +195,140 @@ $("#sheet").onclick = (e) => {
   if (z) { $("#zoom img").src = z.dataset.zoom; $("#zoom").classList.add("on"); $("#zoom").scrollTop = 0; }
 };
 $("#zoom").onclick = (e) => { if (e.target.tagName !== "IMG") $("#zoom").classList.remove("on"); };
+
+// ─── 동선 지도 — 거제 · 통영 안에서 차로 다니는 곳만(기차 구간은 뺀다) ───
+const DCOL = ["#ff6b5a", "#0e8f8f", "#7c5cff"];
+let RAW = null, mapDay = "all", mapObj = null, mlP = null, mapDrawn = "";
+function loadML() {
+  return mlP ||= new Promise((ok, no) => {
+    const c = document.createElement("link"); c.rel = "stylesheet";
+    c.href = "https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css"; document.head.appendChild(c);
+    const j = document.createElement("script"); j.src = "https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js";
+    j.onload = () => ok(window.maplibregl); j.onerror = no; document.head.appendChild(j);
+  });
+}
+const SLOT_IC = { meal: "🍽️", cafe: "☕", bbq: "🔥", spot: "📸", shop: "🛒" };
+const NEAR = (p) => p && p.lat != null && p.lat < 35.2;   // 거제 · 통영 범위
+function mapStops(d) {
+  const rows = [];
+  for (const i of d.items || []) {
+    const g = i.geo && i.geo.at;
+    if (!NEAR(g)) continue;
+    rows.push({ day: i.day, time: (i.time || "").slice(0, 5), name: g.name, lat: g.lat, lng: g.lng, ic: "🏠",
+                label: (i.title || "").replace(/^\S+\s+/, "").split(" — ")[0] });
+  }
+  for (const s of d.slots || []) {
+    const o = s.chosen;
+    if (!NEAR(o)) continue;
+    const t = s.title || "";
+    rows.push({ day: s.day, time: (s.time || "").slice(0, 5), name: o.title, lat: o.lat, lng: o.lng,
+                ic: t.includes("아침") || t.includes("아점") ? "🍳" : SLOT_IC[s.kind] || "📍", label: t, url: o.url });
+  }
+  rows.sort((a, b) => (a.day + a.time).localeCompare(b.day + b.time));
+  const out = [];
+  for (const r of rows) {
+    const l = out[out.length - 1];
+    if (l && l.day === r.day && Math.abs(l.lat - r.lat) < 1e-4 && Math.abs(l.lng - r.lng) < 1e-4) continue;
+    out.push({ ...r, dayN: DAYS.indexOf(r.day) });
+  }
+  return out;
+}
+// 차 경로 — 기기에 기억해 두고, 없으면 길찾기(OSRM)
+async function carRoute(pts) {
+  const key = pts.map((p) => p.lng.toFixed(5) + "," + p.lat.toFixed(5)).join(";");
+  try { const c = localStorage.getItem("tl-route:" + key); if (c) return JSON.parse(c); } catch (e) {}
+  const r = await fetch("https://router.project-osrm.org/route/v1/driving/" + key + "?overview=full&geometries=geojson");
+  const d = await r.json();
+  if (d.code !== "Ok") throw new Error(d.code);
+  const out = { line: d.routes[0].geometry.coordinates, legs: d.routes[0].legs.map((l) => ({ km: l.distance / 1000, min: l.duration / 60 })) };
+  try { localStorage.setItem("tl-route:" + key, JSON.stringify(out)); } catch (e) {}
+  return out;
+}
+const fmtMin = (m) => m >= 60 ? `${Math.floor(m / 60)}시간 ${Math.round(m % 60)}분` : `${Math.round(m)}분`;
+function stopListHtml(stops, legs) {
+  let h = "", cur = null;
+  stops.forEach((s, i) => {
+    if (s.day !== cur) { cur = s.day; h += `<div class="m-day">DAY ${s.dayN + 1} · ${TripLive.dayLabel(s.day)}</div>`; }
+    else { const g = legs[i]; h += `<div class="leg">${g ? `🚗 ${g.km.toFixed(g.km < 10 ? 1 : 0)}km · ${fmtMin(g.min)}` : "🚗 길 찾는 중"}</div>`; }
+    h += `<div class="stop" data-si="${i}"><span class="num" style="background:${DCOL[s.dayN] || DCOL[0]}">${i + 1}</span>
+      <span class="st-time">${s.time}</span><div class="st-main"><b>${s.ic} ${esc(s.name)}</b><small>${esc(s.label)}</small></div></div>`;
+  });
+  return h;
+}
+function renderMapSec() {
+  const chips = [["all", "전체"], ...DAYS.map((d, i) => [d, `DAY ${i + 1}`])]
+    .map(([v, l]) => `<button type="button" class="m-chip${mapDay === v ? " on" : ""}" data-mday="${v}">${l}</button>`).join("");
+  return `<section data-day="map" hidden><h2><span class="dn">동선</span>거제 · 통영 지도</h2>
+    <div class="m-chips">${chips}</div>
+    <div class="mapbox" id="map"><div class="map-loading"><span><span class="spin"></span>지도를 불러오는 중</span></div></div>
+    <p class="m-sum" id="mSum"></p><div class="m-list" id="mList"></div>
+    <p class="m-note">기차 구간은 빼고 거제 · 통영 안에서 차로 다니는 길만 그려요. 거리 · 시간은 어림값이에요.</p></section>`;
+}
+async function drawMap(force) {
+  const el = $("#map");
+  if (!el || !RAW) return;
+  const all = mapStops(RAW), stops = mapDay === "all" ? all : all.filter((s) => s.day === mapDay);
+  const sig = mapDay + JSON.stringify(stops.map((s) => [s.day, s.time, s.lat, s.lng]));
+  if (!force && sig === mapDrawn && mapObj) { mapObj.resize(); return; }
+  mapDrawn = sig;
+  const legs = [];
+  $("#mList").innerHTML = stopListHtml(stops, legs);
+  const groups = [...new Set(stops.map((s) => s.day))].map((d) => ({
+    dayN: DAYS.indexOf(d), idx: stops.map((s, i) => [s, i]).filter(([s]) => s.day === d).map(([, i]) => i),
+  })).filter((g) => g.idx.length > 1);
+  const routed = Promise.all(groups.map((g) => carRoute(g.idx.map((i) => stops[i])).then((r) => ({ g, r }), () => ({ g, r: null }))));
+  let ml;
+  try { ml = await loadML(); } catch (e) { el.innerHTML = '<div class="map-loading">지도를 불러오지 못했어요</div>'; return; }
+  if (mapObj) { mapObj.remove(); mapObj = null; }
+  el.innerHTML = "";
+  const lngs = stops.map((s) => s.lng), lats = stops.map((s) => s.lat);
+  const map = mapObj = new ml.Map({
+    container: el, style: "https://tiles.openfreemap.org/styles/positron", attributionControl: { compact: true },
+    localIdeographFontFamily: "'Pretendard Variable', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif",
+    dragRotate: false, pitchWithRotate: false,
+    ...(stops.length > 1 ? { bounds: [[Math.min(...lngs), Math.min(...lats)], [Math.max(...lngs), Math.max(...lats)]], fitBoundsOptions: { padding: 40 } }
+      : { center: stops[0] ? [stops[0].lng, stops[0].lat] : [128.6, 34.8], zoom: 12 }),
+  });
+  map.touchZoomRotate.disableRotation();
+  map.addControl(new ml.NavigationControl({ showCompass: false }), "bottom-right");
+  const pops = stops.map((s, i) => {
+    const pin = document.createElement("div");
+    pin.className = "pin"; pin.style.setProperty("--c", DCOL[s.dayN] || DCOL[0]); pin.textContent = i + 1;
+    const pop = new ml.Popup({ offset: 18, closeButton: false }).setHTML(`<b>${i + 1}. ${s.ic} ${esc(s.name)}</b><br>${TripLive.dayLabel(s.day)} ${s.time} · ${esc(s.label)}`
+      + (s.url ? `<br><a href="${esc(s.url)}" target="_blank" rel="noopener">네이버 지도 ›</a>` : ""));
+    new ml.Marker({ element: pin }).setLngLat([s.lng, s.lat]).setPopup(pop).addTo(map);
+    return pop;
+  });
+  $("#mList").onclick = (e) => {
+    const st = e.target.closest("[data-si]"); if (!st) return;
+    const i = +st.dataset.si, s = stops[i];
+    pops.forEach((p) => p.remove());
+    map.flyTo({ center: [s.lng, s.lat], zoom: 14 });
+    pops[i].setLngLat([s.lng, s.lat]).addTo(map);
+    scrollTo({ top: el.getBoundingClientRect().top + scrollY - 70, behavior: "smooth" });
+  };
+  map.on("load", async () => {
+    const done = await routed;
+    if (mapObj !== map) return;
+    let km = 0, min = 0;
+    const feats = done.map(({ g, r }) => {
+      if (r) r.legs.forEach((l, k) => { legs[g.idx[k + 1]] = l; km += l.km; min += l.min; });
+      return { type: "Feature", properties: { color: DCOL[g.dayN] || DCOL[0] },
+               geometry: { type: "LineString", coordinates: r ? r.line : g.idx.map((i) => [stops[i].lng, stops[i].lat]) } };
+    });
+    map.addSource("car", { type: "geojson", data: { type: "FeatureCollection", features: feats } });
+    map.addLayer({ id: "car-casing", type: "line", source: "car", layout: { "line-cap": "round", "line-join": "round" }, paint: { "line-color": "#fff", "line-width": 8 } });
+    map.addLayer({ id: "car", type: "line", source: "car", layout: { "line-cap": "round", "line-join": "round" }, paint: { "line-color": ["get", "color"], "line-width": 4.5 } });
+    $("#mSum").textContent = `${stops.length}곳 · 🚗 ${Math.round(km)}km · ${fmtMin(min)}`;
+    $("#mList").innerHTML = stopListHtml(stops, legs);
+  });
+}
+$("#days").addEventListener("click", (e) => {
+  const c = e.target.closest("[data-mday]"); if (!c) return;
+  mapDay = c.dataset.mday;
+  document.querySelectorAll(".m-chip").forEach((b) => b.classList.toggle("on", b === c));
+  drawMap(true);
+});
 
 // 처음엔 저장본으로 그리고, DB 에서 읽히면 바로 바꾼다
 if (SNAP) render(SNAP);
