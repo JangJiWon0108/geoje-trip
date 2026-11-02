@@ -49,7 +49,7 @@
       const t = i.title || "", sp = t.indexOf(" ");
       const ic = sp > 0 ? t.slice(0, sp) : "📌", rest = sp > 0 ? t.slice(sp + 1) : t;
       out.push({ day: i.day, time: (i.time || "").slice(0, 5), ic, tag: ic.includes("🚄") ? "이동" : "숙소",
-        color: "#0e7c86", name: rest, sub: "", url: i.url, memo: i.memo || "" });
+        color: "#0e7c86", name: rest, sub: "", url: i.url, memo: i.memo || "", photo: i.photo || null });
     }
     for (const s of d.slots || []) {
       let [ic, color] = SLOT[s.kind] || SLOT.meal;
@@ -58,9 +58,9 @@
       if (!o && !s.fixed) continue;
       out.push(o
         ? { day: s.day, time: (s.time || "").slice(0, 5), ic, tag: s.title, color, name: o.title,
-            sub: [o.area, o.menu].filter(Boolean).join(" · "), url: o.url, memo: s.memo || "" }
+            sub: [o.area, o.menu].filter(Boolean).join(" · "), url: o.url, memo: s.memo || "", photo: o.photo || s.photo || null }
         : { day: s.day, time: (s.time || "").slice(0, 5), ic, tag: "저녁", color, name: s.title,
-            sub: "", url: null, memo: s.memo || "" });
+            sub: "", url: null, memo: s.memo || "", photo: s.photo || null });
     }
     out.sort((a, b) => (a.day + a.time).localeCompare(b.day + b.time));
     for (const r of out) {

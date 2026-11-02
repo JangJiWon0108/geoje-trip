@@ -393,13 +393,13 @@ create or replace function public.public_timeline() returns json
 language sql stable security definer set search_path = public as $$
   select json_build_object(
     'items', coalesce((
-      select json_agg(json_build_object('day', day, 'time', time, 'title', title, 'memo', memo, 'url', url) order by day, time)
+      select json_agg(json_build_object('day', day, 'time', time, 'title', title, 'memo', memo, 'url', url, 'photo', photo_url) order by day, time)
       from trip_items where kind = 'schedule'), '[]'::json),
     'slots', coalesce((
       select json_agg(json_build_object(
-               'day', s.day, 'time', s.time, 'kind', s.kind, 'title', s.title, 'fixed', s.fixed, 'memo', s.memo,
+               'day', s.day, 'time', s.time, 'kind', s.kind, 'title', s.title, 'fixed', s.fixed, 'memo', s.memo, 'photo', s.photo_url,
                'chosen', case when o.id is null then null
-                              else json_build_object('title', o.title, 'area', o.area, 'menu', o.menu, 'url', o.url) end)
+                              else json_build_object('title', o.title, 'area', o.area, 'menu', o.menu, 'url', o.url, 'photo', o.photo_url) end)
              order by s.day, s.time)
       from trip_slots s left join trip_options o on o.id = s.chosen_id), '[]'::json)
   )
