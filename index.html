@@ -2236,5 +2236,19 @@ async function start() {
 }
 start();
 </script>
+<script>
+// 새 버전 확인 — GitHub Pages 가 10분 캐시하므로 서버의 Last-Modified 가 더 새로우면 다시 불러온다
+(function () {
+  function check() {
+    fetch(location.pathname, { method: "HEAD", cache: "no-store" }).then(function (r) {
+      var lm = Date.parse(r.headers.get("last-modified") || "");
+      var cur = new Date(document.lastModified).getTime();
+      if (lm && cur && lm - cur > 2000) location.replace(location.pathname + "?v=" + lm + location.hash);
+    }).catch(function () {});
+  }
+  check();
+  document.addEventListener("visibilitychange", function () { if (!document.hidden) check(); });
+})();
+</script>
 </body>
 </html>
